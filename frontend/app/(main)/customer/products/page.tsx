@@ -10,14 +10,12 @@ import { Toast } from 'primereact/toast';
 import { Sidebar } from 'primereact/sidebar';
 import React, { useRef, useState } from 'react';
 import { classNames } from 'primereact/utils';
-import './products.scss';
 
 interface Product {
     id: number;
     name: string;
     category: string;
     price: number;
-    oldPrice?: number;
     stock: number;
     rating: number;
     reviews: number;
@@ -122,7 +120,7 @@ const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [sortKey, setSortKey] = useState<string>('');
     const [filterVisible, setFilterVisible] = useState(false);
-    const [categoryVisible, setCategoryVisible] = useState(true);
+    const [categoryVisible, setCategoryVisible] = useState(false);
     const [cart, setCart] = useState<{ [key: number]: number }>({});
     const toast = useRef<Toast>(null);
 
@@ -199,7 +197,6 @@ const ProductsPage = () => {
 
                     <div className="product-image-container mb-3 relative">
                         <img src={product.image} alt={product.name} className="product-image w-full border-round" style={{ height: '220px', objectFit: 'cover' }} />
-                        {product.oldPrice && <div className="sale-badge">-{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%</div>}
                     </div>
 
                     <div className="product-info">
@@ -218,7 +215,6 @@ const ProductsPage = () => {
                         <div className="flex align-items-end justify-content-between mb-3">
                             <div>
                                 <div className="text-2xl font-bold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</div>
-                                {product.oldPrice && <div className="text-sm text-500 line-through">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.oldPrice)}</div>}
                             </div>
                             <div className="text-sm text-600">
                                 Còn: <span className="font-semibold text-900">{product.stock}</span>

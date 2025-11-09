@@ -47,7 +47,6 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         name: 'Cải Thảo Hữu Cơ',
         category: 'Rau Củ Quả',
         price: 25000,
-        oldPrice: 30000,
         stock: 150,
         rating: 4.5,
         reviews: 24,
@@ -191,7 +190,6 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                         <div className="col-12 md:col-7">
                             <div className="flex align-items-center gap-2 mb-3">
                                 <Tag value={product.category} severity="info"></Tag>
-                                {product.oldPrice && <Tag value="SALE" severity="danger"></Tag>}
                                 {product.stock < 50 && <Tag value="Sắp hết hàng" severity="warning"></Tag>}
                             </div>
 

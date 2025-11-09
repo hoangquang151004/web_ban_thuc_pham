@@ -25,8 +25,8 @@ const LandingPage = () => {
             <div id="home" className="landing-wrapper overflow-hidden">
                 <div className="py-4 px-4 mx-0 md:mx-6 lg:mx-8 lg:px-8 flex align-items-center justify-content-between relative lg:static">
                     <Link href="/" className="flex align-items-center">
-                        <i className="pi pi-shopping-bag text-green-500 mr-2" style={{ fontSize: '2.5rem' }}></i>
-                        <span className="text-900 font-bold text-2xl line-height-3 mr-8">FreshFood Market</span>
+                        <img src={`/layout/images/logo-${layoutConfig.colorScheme !== 'light' ? 'white' : 'dark'}.svg`} width="47.22px" height={'35px'} alt="logo" />
+                        <span className="text-900 font-bold text-2xl line-height-3 ml-2 mr-8">Cửa hàng thực phẩm</span>
                     </Link>
                     <StyleClass nodeRef={menuRef as NodeRef} selector="@next" enterClassName="hidden" leaveToClassName="hidden" hideOnOutsideClick>
                         <i ref={menuRef} className="pi pi-bars text-4xl cursor-pointer block lg:hidden text-700"></i>
@@ -60,10 +60,10 @@ const LandingPage = () => {
                         </ul>
                         <div className="flex justify-content-between lg:block border-top-1 lg:border-top-none surface-border py-3 lg:py-0 mt-3 lg:mt-0">
                             <Link href="/auth/login">
-                                <Button label="Đăng nhập" text rounded className="border-none font-light line-height-2 text-green-600"></Button>
+                                <Button label="Đăng nhập" text rounded className="border-none font-light line-height-2" style={{ color: 'var(--primary-color)' }}></Button>
                             </Link>
                             <Link href="/auth/register">
-                                <Button label="Đăng ký" rounded className="border-none ml-5 font-light line-height-2 bg-green-600 text-white"></Button>
+                                <Button label="Đăng ký" rounded className="border-none ml-5 font-light line-height-2 text-white" style={{ background: 'var(--primary-color)' }}></Button>
                             </Link>
                         </div>
                     </div>
@@ -73,7 +73,7 @@ const LandingPage = () => {
                     id="hero"
                     className="flex flex-column pt-4 px-4 lg:px-8 overflow-hidden"
                     style={{
-                        background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, #C8E6C9 0%, #A5D6A7 100%)',
+                        background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, var(--primary-50) 0%, var(--primary-100) 100%)',
                         clipPath: 'ellipse(150% 87% at 93% 13%)'
                     }}
                 >
@@ -82,8 +82,8 @@ const LandingPage = () => {
                             <span className="font-light block">Thực phẩm tươi sạch</span>Giao hàng tận nơi
                         </h1>
                         <p className="font-normal text-2xl line-height-3 md:mt-3 text-gray-700">Mang đến cho bạn những sản phẩm thực phẩm tươi ngon, an toàn và chất lượng nhất. Giao hàng nhanh chóng trong vòng 2 giờ!</p>
-                        <Link href="/customer/products">
-                            <Button type="button" label="Mua sắm ngay" icon="pi pi-shopping-cart" rounded className="text-xl border-none mt-3 bg-green-600 font-normal line-height-3 px-3 text-white"></Button>
+                        <Link href="auth/login">
+                            <Button type="button" label="Mua sắm ngay" icon="pi pi-shopping-cart" rounded className="text-xl border-none mt-3 font-normal line-height-3 px-3 text-white" style={{ background: 'var(--primary-color)' }}></Button>
                         </Link>
                     </div>
                     <div className="flex justify-content-center md:justify-content-end">
@@ -91,35 +91,37 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                <div id="features" className="py-4 px-4 lg:px-8 mt-5 mx-0 lg:mx-8">
+                <div id="products" className="py-4 px-4 lg:px-8 mt-5 mx-0 lg:mx-8">
                     <div className="grid justify-content-center">
                         <div className="col-12 text-center mt-8 mb-4">
-                            <h2 className="text-900 font-normal mb-2">Marvelous Features</h2>
-                            <span className="text-600 text-2xl">Placerat in egestas erat...</span>
+                            <h2 className="text-900 font-normal mb-2 text-5xl">Sản Phẩm Nổi Bật</h2>
+                            <span className="text-600 text-2xl">Những sản phẩm thực phẩm tươi ngon và chất lượng cao</span>
                         </div>
 
                         <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(253, 228, 165, 0.2), rgba(187, 199, 205, 0.2)), linear-gradient(180deg, rgba(253, 228, 165, 0.2), rgba(187, 199, 205, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2)), linear-gradient(180deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
                                     <div
-                                        className="flex align-items-center justify-content-center bg-yellow-200 mb-3"
+                                        className="flex align-items-center justify-content-center mb-3"
                                         style={{
                                             width: '3.5rem',
                                             height: '3.5rem',
-                                            borderRadius: '10px'
+                                            borderRadius: '10px',
+                                            background: 'var(--primary-100)',
+                                            color: 'var(--primary-700)'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-users text-2xl text-yellow-700"></i>
+                                        <i className="pi pi-fw pi-shopping-bag text-2xl"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Easy to Use</h5>
-                                    <span className="text-600">Posuere morbi leo urna molestie.</span>
+                                    <h5 className="mb-2 text-900">Rau Củ Tươi</h5>
+                                    <span className="text-600">Rau củ quả tươi sạch, nhập khẩu và địa phương. An toàn vệ sinh thực phẩm.</span>
                                 </div>
                             </div>
                         </div>
@@ -127,25 +129,25 @@ const LandingPage = () => {
                         <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(145,226,237,0.2),rgba(251, 199, 145, 0.2)), linear-gradient(180deg, rgba(253, 228, 165, 0.2), rgba(172, 180, 223, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(244, 67, 54, 0.2), rgba(233, 30, 99, 0.2)), linear-gradient(180deg, rgba(244, 67, 54, 0.2), rgba(233, 30, 99, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
                                     <div
-                                        className="flex align-items-center justify-content-center bg-cyan-200 mb-3"
+                                        className="flex align-items-center justify-content-center bg-red-200 mb-3"
                                         style={{
                                             width: '3.5rem',
                                             height: '3.5rem',
                                             borderRadius: '10px'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-palette text-2xl text-cyan-700"></i>
+                                        <i className="pi pi-fw pi-heart text-2xl text-red-700"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Fresh Design</h5>
-                                    <span className="text-600">Semper risus in hendrerit.</span>
+                                    <h5 className="mb-2 text-900">Thịt & Hải Sản</h5>
+                                    <span className="text-600">Thịt bò, heo, gà và hải sản tươi sống. Nguồn gốc rõ ràng, đảm bảo chất lượng.</span>
                                 </div>
                             </div>
                         </div>
@@ -153,25 +155,25 @@ const LandingPage = () => {
                         <div className="col-12 md:col-12 lg:col-4 p-0 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(145, 226, 237, 0.2), rgba(172, 180, 223, 0.2)), linear-gradient(180deg, rgba(172, 180, 223, 0.2), rgba(246, 158, 188, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.2)), linear-gradient(180deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
                                     <div
-                                        className="flex align-items-center justify-content-center bg-indigo-200"
+                                        className="flex align-items-center justify-content-center bg-orange-200"
                                         style={{
                                             width: '3.5rem',
                                             height: '3.5rem',
                                             borderRadius: '10px'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-map text-2xl text-indigo-700"></i>
+                                        <i className="pi pi-fw pi-sun text-2xl text-orange-700"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Well Documented</h5>
-                                    <span className="text-600">Non arcu risus quis varius quam quisque.</span>
+                                    <h5 className="mb-2 text-900">Trái Cây Tươi</h5>
+                                    <span className="text-600">Trái cây nhập khẩu và trong nước. Tươi ngon, giàu vitamin và khoáng chất.</span>
                                 </div>
                             </div>
                         </div>
@@ -179,25 +181,25 @@ const LandingPage = () => {
                         <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(187, 199, 205, 0.2),rgba(251, 199, 145, 0.2)), linear-gradient(180deg, rgba(253, 228, 165, 0.2),rgba(145, 210, 204, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(121, 85, 72, 0.2), rgba(93, 64, 55, 0.2)), linear-gradient(180deg, rgba(121, 85, 72, 0.2), rgba(93, 64, 55, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
                                     <div
-                                        className="flex align-items-center justify-content-center bg-bluegray-200 mb-3"
+                                        className="flex align-items-center justify-content-center bg-brown-200 mb-3"
                                         style={{
                                             width: '3.5rem',
                                             height: '3.5rem',
                                             borderRadius: '10px'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-id-card text-2xl text-bluegray-700"></i>
+                                        <i className="pi pi-fw pi-box text-2xl text-brown-700"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Responsive Layout</h5>
-                                    <span className="text-600">Nulla malesuada pellentesque elit.</span>
+                                    <h5 className="mb-2 text-900">Gạo & Ngũ Cốc</h5>
+                                    <span className="text-600">Gạo sạch ST25, gạo hữu cơ và các loại ngũ cốc dinh dưỡng cao.</span>
                                 </div>
                             </div>
                         </div>
@@ -205,88 +207,10 @@ const LandingPage = () => {
                         <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(187, 199, 205, 0.2),rgba(246, 158, 188, 0.2)), linear-gradient(180deg, rgba(145, 226, 237, 0.2),rgba(160, 210, 250, 0.2))'
-                                }}
-                            >
-                                <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
-                                    <div
-                                        className="flex align-items-center justify-content-center bg-orange-200 mb-3"
-                                        style={{
-                                            width: '3.5rem',
-                                            height: '3.5rem',
-                                            borderRadius: '10px'
-                                        }}
-                                    >
-                                        <i className="pi pi-fw pi-star text-2xl text-orange-700"></i>
-                                    </div>
-                                    <h5 className="mb-2 text-900">Clean Code</h5>
-                                    <span className="text-600">Condimentum lacinia quis vel eros.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-12 md:col-12 lg:col-4 p-0 lg:pb-5 mt-4 lg:mt-0">
-                            <div
-                                style={{
-                                    height: '160px',
-                                    padding: '2px',
-                                    borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(251, 199, 145, 0.2), rgba(246, 158, 188, 0.2)), linear-gradient(180deg, rgba(172, 180, 223, 0.2), rgba(212, 162, 221, 0.2))'
-                                }}
-                            >
-                                <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
-                                    <div
-                                        className="flex align-items-center justify-content-center bg-pink-200 mb-3"
-                                        style={{
-                                            width: '3.5rem',
-                                            height: '3.5rem',
-                                            borderRadius: '10px'
-                                        }}
-                                    >
-                                        <i className="pi pi-fw pi-moon text-2xl text-pink-700"></i>
-                                    </div>
-                                    <h5 className="mb-2 text-900">Dark Mode</h5>
-                                    <span className="text-600">Convallis tellus id interdum velit laoreet.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 mt-4 lg:mt-0">
-                            <div
-                                style={{
-                                    height: '160px',
-                                    padding: '2px',
-                                    borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(145, 210, 204, 0.2), rgba(160, 210, 250, 0.2)), linear-gradient(180deg, rgba(187, 199, 205, 0.2), rgba(145, 210, 204, 0.2))'
-                                }}
-                            >
-                                <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
-                                    <div
-                                        className="flex align-items-center justify-content-center bg-teal-200 mb-3"
-                                        style={{
-                                            width: '3.5rem',
-                                            height: '3.5rem',
-                                            borderRadius: '10px'
-                                        }}
-                                    >
-                                        <i className="pi pi-fw pi-shopping-cart text-2xl text-teal-700"></i>
-                                    </div>
-                                    <h5 className="mb-2 text-900">Ready to Use</h5>
-                                    <span className="text-600">Mauris sit amet massa vitae.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-12 md:col-12 lg:col-4 p-0 lg:pr-5 mt-4 lg:mt-0">
-                            <div
-                                style={{
-                                    height: '160px',
-                                    padding: '2px',
-                                    borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(145, 210, 204, 0.2), rgba(212, 162, 221, 0.2)), linear-gradient(180deg, rgba(251, 199, 145, 0.2), rgba(160, 210, 250, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(3, 169, 244, 0.2), rgba(33, 150, 243, 0.2)), linear-gradient(180deg, rgba(3, 169, 244, 0.2), rgba(33, 150, 243, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
@@ -298,21 +222,21 @@ const LandingPage = () => {
                                             borderRadius: '10px'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-globe text-2xl text-blue-700"></i>
+                                        <i className="pi pi-fw pi-chart-bar text-2xl text-blue-700"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Modern Practices</h5>
-                                    <span className="text-600">Elementum nibh tellus molestie nunc non.</span>
+                                    <h5 className="mb-2 text-900">Sữa & Trứng</h5>
+                                    <span className="text-600">Sữa tươi, sữa chua và trứng gà organic. Giàu protein và canxi.</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="col-12 md:col-12 lg:col-4 p-0 lg-4 mt-4 lg:mt-0">
+                        <div className="col-12 md:col-12 lg:col-4 p-0 lg:pb-5 mt-4 lg:mt-0">
                             <div
                                 style={{
-                                    height: '160px',
+                                    height: '200px',
                                     padding: '2px',
                                     borderRadius: '10px',
-                                    background: 'linear-gradient(90deg, rgba(160, 210, 250, 0.2), rgba(212, 162, 221, 0.2)), linear-gradient(180deg, rgba(246, 158, 188, 0.2), rgba(212, 162, 221, 0.2))'
+                                    background: 'linear-gradient(90deg, rgba(103, 58, 183, 0.2), rgba(156, 39, 176, 0.2)), linear-gradient(180deg, rgba(103, 58, 183, 0.2), rgba(156, 39, 176, 0.2))'
                                 }}
                             >
                                 <div className="p-3 surface-card h-full" style={{ borderRadius: '8px' }}>
@@ -324,10 +248,10 @@ const LandingPage = () => {
                                             borderRadius: '10px'
                                         }}
                                     >
-                                        <i className="pi pi-fw pi-eye text-2xl text-purple-700"></i>
+                                        <i className="pi pi-fw pi-gift text-2xl text-purple-700"></i>
                                     </div>
-                                    <h5 className="mb-2 text-900">Privacy</h5>
-                                    <span className="text-600">Neque egestas congue quisque.</span>
+                                    <h5 className="mb-2 text-900">Đồ Ăn Vặt</h5>
+                                    <span className="text-600">Snack, bánh kẹo và đồ uống. Phù hợp cho mọi lứa tuổi.</span>
                                 </div>
                             </div>
                         </div>
@@ -336,47 +260,54 @@ const LandingPage = () => {
                             className="col-12 mt-8 mb-8 p-2 md:p-8"
                             style={{
                                 borderRadius: '20px',
-                                background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, #EFE1AF 0%, #C3DCFA 100%)'
+                                background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, #C8E6C9 0%, #A5D6A7 100%)'
                             }}
                         >
                             <div className="flex flex-column justify-content-center align-items-center text-center px-3 py-3 md:py-0">
-                                <h3 className="text-gray-900 mb-2">Joséphine Miller</h3>
-                                <span className="text-gray-600 text-2xl">Peak Interactive</span>
+                                <h3 className="text-gray-900 mb-2 text-3xl">Khách hàng hài lòng</h3>
+                                <span className="text-gray-600 text-2xl">Lê Thu Mai - Khách hàng thân thiết</span>
                                 <p className="text-gray-900 sm:line-height-2 md:line-height-4 text-2xl mt-4" style={{ maxWidth: '800px' }}>
-                                    “Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-                                    laborum.”
+                                    "Tôi rất hài lòng với chất lượng thực phẩm ở đây. Rau củ tươi ngon, thịt cá đảm bảo vệ sinh, giao hàng nhanh chóng. Giá cả hợp lý và có nhiều chương trình khuyến mãi. Tôi sẽ giới thiệu cho bạn bè và người thân!"
                                 </p>
-                                <img src="/demo/images/landing/peak-logo.svg" className="mt-4" alt="Company logo" />
+                                <div className="flex gap-2 mt-4">
+                                    <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
+                                    <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
+                                    <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
+                                    <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
+                                    <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="highlights" className="py-4 px-4 lg:px-8 mx-0 my-6 lg:mx-8">
+                <div id="about" className="py-4 px-4 lg:px-8 mx-0 my-6 lg:mx-8">
                     <div className="text-center">
-                        <h2 className="text-900 font-normal mb-2">Powerful Everywhere</h2>
-                        <span className="text-600 text-2xl">Amet consectetur adipiscing elit...</span>
+                        <h2 className="text-900 font-normal mb-2 text-5xl">Tại Sao Chọn Chúng Tôi?</h2>
+                        <span className="text-600 text-2xl">Những giá trị cốt lõi mang đến cho khách hàng</span>
                     </div>
 
                     <div className="grid mt-8 pb-2 md:pb-8">
-                        <div className="flex justify-content-center col-12 lg:col-6 bg-purple-100 p-0 flex-order-1 lg:flex-order-0" style={{ borderRadius: '8px' }}>
-                            <img src="/demo/images/landing/mockup.svg" className="w-11" alt="mockup mobile" />
+                        <div className="flex justify-content-center col-12 lg:col-6 p-8 flex-order-1 lg:flex-order-0" style={{ borderRadius: '8px', background: 'var(--primary-50)' }}>
+                            <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600" alt="Fresh Delivery" className="w-full border-round shadow-4" style={{ maxHeight: '400px', objectFit: 'cover' }} />
                         </div>
 
                         <div className="col-12 lg:col-6 my-auto flex flex-column lg:align-items-end text-center lg:text-right">
                             <div
-                                className="flex align-items-center justify-content-center bg-purple-200 align-self-center lg:align-self-end"
+                                className="flex align-items-center justify-content-center align-self-center lg:align-self-end"
                                 style={{
                                     width: '4.2rem',
                                     height: '4.2rem',
-                                    borderRadius: '10px'
+                                    borderRadius: '10px',
+                                    background: 'var(--primary-100)',
+                                    color: 'var(--primary-700)'
                                 }}
                             >
-                                <i className="pi pi-fw pi-mobile text-5xl text-purple-700"></i>
+                                <i className="pi pi-fw pi-truck text-5xl"></i>
                             </div>
-                            <h2 className="line-height-1 text-900 text-4xl font-normal">Congue Quisque Egestas</h2>
+                            <h2 className="line-height-1 text-900 text-4xl font-normal">Giao Hàng Nhanh Chóng</h2>
                             <span className="text-700 text-2xl line-height-3 ml-0 md:ml-2" style={{ maxWidth: '650px' }}>
-                                Lectus arcu bibendum at varius vel pharetra vel turpis nunc. Eget aliquet nibh praesent tristique magna sit amet purus gravida. Sit amet mattis vulputate enim nulla aliquet.
+                                Chúng tôi cam kết giao hàng trong vòng 2 giờ trong khu vực nội thành. Đội ngũ shipper chuyên nghiệp, bảo quản sản phẩm cẩn thận. Miễn phí vận chuyển cho đơn hàng trên 500.000đ.
                             </span>
                         </div>
                     </div>
@@ -384,175 +315,151 @@ const LandingPage = () => {
                     <div className="grid my-8 pt-2 md:pt-8">
                         <div className="col-12 lg:col-6 my-auto flex flex-column text-center lg:text-left lg:align-items-start">
                             <div
-                                className="flex align-items-center justify-content-center bg-yellow-200 align-self-center lg:align-self-start"
+                                className="flex align-items-center justify-content-center bg-blue-200 align-self-center lg:align-self-start"
                                 style={{
                                     width: '4.2rem',
                                     height: '4.2rem',
                                     borderRadius: '10px'
                                 }}
                             >
-                                <i className="pi pi-fw pi-desktop text-5xl text-yellow-700"></i>
+                                <i className="pi pi-fw pi-shield text-5xl text-blue-700"></i>
                             </div>
-                            <h2 className="line-height-1 text-900 text-4xl font-normal">Celerisque Eu Ultrices</h2>
+                            <h2 className="line-height-1 text-900 text-4xl font-normal">Chất Lượng Đảm Bảo</h2>
                             <span className="text-700 text-2xl line-height-3 mr-0 md:mr-2" style={{ maxWidth: '650px' }}>
-                                Adipiscing commodo elit at imperdiet dui. Viverra nibh cras pulvinar mattis nunc sed blandit libero. Suspendisse in est ante in. Mauris pharetra et ultrices neque ornare aenean euismod elementum nisi.
+                                Tất cả sản phẩm đều được kiểm tra nghiêm ngặt về nguồn gốc, xuất xứ và chất lượng. Chứng nhận ATTP, VietGAP, GlobalGAP. Hoàn tiền 100% nếu sản phẩm không đạt chất lượng cam kết.
                             </span>
                         </div>
 
-                        <div className="flex justify-content-end flex-order-1 sm:flex-order-2 col-12 lg:col-6 bg-yellow-100 p-0" style={{ borderRadius: '8px' }}>
-                            <img src="/demo/images/landing/mockup-desktop.svg" className="w-11" alt="mockup" />
+                        <div className="flex justify-content-end flex-order-1 sm:flex-order-2 col-12 lg:col-6 p-8" style={{ borderRadius: '8px', background: 'var(--primary-50)' }}>
+                            <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600" alt="Quality Assurance" className="w-full border-round shadow-4" style={{ maxHeight: '400px', objectFit: 'cover' }} />
+                        </div>
+                    </div>
+
+                    <div className="grid my-8 pt-2 md:pt-8">
+                        <div className="flex justify-content-center col-12 lg:col-6 p-8 flex-order-1 lg:flex-order-0" style={{ borderRadius: '8px', background: 'var(--primary-50)' }}>
+                            <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600" alt="Best Price" className="w-full border-round shadow-4" style={{ maxHeight: '400px', objectFit: 'cover' }} />
+                        </div>
+
+                        <div className="col-12 lg:col-6 my-auto flex flex-column lg:align-items-end text-center lg:text-right">
+                            <div
+                                className="flex align-items-center justify-content-center bg-orange-200 align-self-center lg:align-self-end"
+                                style={{
+                                    width: '4.2rem',
+                                    height: '4.2rem',
+                                    borderRadius: '10px'
+                                }}
+                            >
+                                <i className="pi pi-fw pi-dollar text-5xl text-orange-700"></i>
+                            </div>
+                            <h2 className="line-height-1 text-900 text-4xl font-normal">Giá Cả Hợp Lý</h2>
+                            <span className="text-700 text-2xl line-height-3 ml-0 md:ml-2" style={{ maxWidth: '650px' }}>
+                                Cam kết giá tốt nhất thị trường. Nhiều chương trình khuyến mãi hấp dẫn hàng tuần. Tích điểm thành viên đổi quà. Thanh toán linh hoạt: tiền mặt, chuyển khoản, ví điện tử.
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div id="pricing" className="py-4 px-4 lg:px-8 my-2 md:my-4">
-                    <div className="text-center">
-                        <h2 className="text-900 font-normal mb-2">Matchless Pricing</h2>
-                        <span className="text-600 text-2xl">Amet consectetur adipiscing elit...</span>
+                <div
+                    id="contact"
+                    className="py-8 px-4 lg:px-8 my-2 md:my-4 text-center"
+                    style={{ background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, var(--primary-50) 0%, var(--primary-200) 100%)' }}
+                >
+                    <div className="text-center mb-5">
+                        <h2 className="text-900 font-normal mb-2 text-5xl">Bắt Đầu Mua Sắm Ngay!</h2>
+                        <span className="text-600 text-2xl">Đăng ký hoặc đăng nhập để trải nghiệm dịch vụ tốt nhất</span>
                     </div>
 
-                    <div className="grid justify-content-between mt-8 md:mt-0">
-                        <div className="col-12 lg:col-4 p-0 md:p-3">
-                            <div className="p-3 flex flex-column border-200 pricing-card cursor-pointer border-2 hover:border-primary transition-duration-300 transition-all">
-                                <h3 className="text-900 text-center my-5">Free</h3>
-                                <img src="/demo/images/landing/free.svg" className="w-10 h-10 mx-auto" alt="free" />
-                                <div className="my-5 text-center">
-                                    <span className="text-5xl font-bold mr-2 text-900">$0</span>
-                                    <span className="text-600">per month</span>
-                                    <Button label="Get Started" rounded className="block mx-auto mt-4 border-none ml-3 font-light line-height-2 bg-blue-500 text-white"></Button>
-                                </div>
-                                <Divider className="w-full bg-surface-200"></Divider>
-                                <ul className="my-5 list-none p-0 flex text-900 flex-column">
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Responsive Layout</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Unlimited Push Messages</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">50 Support Ticket</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Free Shipping</span>
-                                    </li>
-                                </ul>
+                    <div className="flex justify-content-center gap-4 flex-wrap">
+                        <Link href="/auth/login">
+                            <Button label="Đăng Nhập" icon="pi pi-sign-in" className="text-xl border-none font-normal py-3 px-5 text-white" style={{ background: 'var(--primary-color)' }} rounded />
+                        </Link>
+                        <Link href="/auth/register">
+                            <Button label="Đăng Ký Ngay" icon="pi pi-user-plus" className="text-xl border-none font-normal py-3 px-5 text-white" style={{ background: 'var(--primary-color)' }} rounded />
+                        </Link>
+                        <Link href="/customer/products">
+                            <Button label="Xem Sản Phẩm" icon="pi pi-shopping-cart" className="text-xl font-normal py-3 px-5" rounded outlined />
+                        </Link>
+                    </div>
+
+                    <div className="mt-8 grid">
+                        <div className="col-12 md:col-4">
+                            <div className="surface-card shadow-2 p-4 border-round">
+                                <i className="pi pi-phone text-4xl mb-3" style={{ color: 'var(--primary-color)' }}></i>
+                                <h4 className="text-900 mb-2">Hotline</h4>
+                                <p className="text-600 text-xl">0866 096 023</p>
                             </div>
                         </div>
-
-                        <div className="col-12 lg:col-4 p-0 md:p-3 mt-4 md:mt-0">
-                            <div className="p-3 flex flex-column border-200 pricing-card cursor-pointer border-2 hover:border-primary transition-duration-300 transition-all">
-                                <h3 className="text-900 text-center my-5">Startup</h3>
-                                <img src="/demo/images/landing/startup.svg" className="w-10 h-10 mx-auto" alt="startup" />
-                                <div className="my-5 text-center">
-                                    <span className="text-5xl font-bold mr-2 text-900">$1</span>
-                                    <span className="text-600">per month</span>
-                                    <Button label="Try Free" rounded className="block mx-auto mt-4 border-none ml-3 font-light line-height-2 bg-blue-500 text-white"></Button>
-                                </div>
-                                <Divider className="w-full bg-surface-200"></Divider>
-                                <ul className="my-5 list-none p-0 flex text-900 flex-column">
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Responsive Layout</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Unlimited Push Messages</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">50 Support Ticket</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Free Shipping</span>
-                                    </li>
-                                </ul>
+                        <div className="col-12 md:col-4">
+                            <div className="surface-card shadow-2 p-4 border-round">
+                                <i className="pi pi-envelope text-4xl mb-3" style={{ color: 'var(--primary-color)' }}></i>
+                                <h4 className="text-900 mb-2">Email</h4>
+                                <p className="text-600 text-xl">quang123@gmail.com.vn</p>
                             </div>
                         </div>
-
-                        <div className="col-12 lg:col-4 p-0 md:p-3 mt-4 md:mt-0">
-                            <div className="p-3 flex flex-column border-200 pricing-card cursor-pointer border-2 hover:border-primary transition-duration-300 transition-all">
-                                <h3 className="text-900 text-center my-5">Enterprise</h3>
-                                <img src="/demo/images/landing/enterprise.svg" className="w-10 h-10 mx-auto" alt="enterprise" />
-                                <div className="my-5 text-center">
-                                    <span className="text-5xl font-bold mr-2 text-900">$999</span>
-                                    <span className="text-600">per month</span>
-                                    <Button label="Get a Quote" rounded className="block mx-auto mt-4 border-none ml-3 font-light line-height-2 bg-blue-500 text-white"></Button>
-                                </div>
-                                <Divider className="w-full bg-surface-200"></Divider>
-                                <ul className="my-5 list-none p-0 flex text-900 flex-column">
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Responsive Layout</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Unlimited Push Messages</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">50 Support Ticket</span>
-                                    </li>
-                                    <li className="py-2">
-                                        <i className="pi pi-fw pi-check text-xl text-cyan-500 mr-2"></i>
-                                        <span className="text-xl line-height-3">Free Shipping</span>
-                                    </li>
-                                </ul>
+                        <div className="col-12 md:col-4">
+                            <div className="surface-card shadow-2 p-4 border-round">
+                                <i className="pi pi-map-marker text-4xl mb-3" style={{ color: 'var(--primary-color)' }}></i>
+                                <h4 className="text-900 mb-2">Địa chỉ</h4>
+                                <p className="text-600 text-xl">1 Mỹ đình, Nam Từ Liên, Hà Nội</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="py-4 px-4 mx-0 mt-8 lg:mx-8">
+                <div className="py-4 px-4 mx-0 mt-8 lg:mx-8 bg-gray-900">
                     <div className="grid justify-content-between">
-                        <div className="col-12 md:col-2" style={{ marginTop: '-1.5rem' }}>
+                        <div className="col-12 md:col-3" style={{ marginTop: '-1.5rem' }}>
                             <Link href="/" className="flex flex-wrap align-items-center justify-content-center md:justify-content-start md:mb-0 mb-3 cursor-pointer">
-                                <img src={`/layout/images/${layoutConfig.colorScheme === 'light' ? 'logo-dark' : 'logo-white'}.svg`} alt="footer sections" width="50" height="50" className="mr-2" />
-                                <span className="font-medium text-3xl text-900">SAKAI</span>
+                                <img src={`/layout/images/logo-white.svg`} width="47.22px" height={'35px'} alt="logo" />
+                                <span className="font-medium text-3xl text-white">Cửa hàng thực phẩm</span>
                             </Link>
+                            <p className="text-gray-400 line-height-3 mt-3">Cung cấp thực phẩm tươi sạch, an toàn cho mọi gia đình Việt.</p>
                         </div>
 
-                        <div className="col-12 md:col-10 lg:col-7">
+                        <div className="col-12 md:col-9">
                             <div className="grid text-center md:text-left">
                                 <div className="col-12 md:col-3">
-                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-900">Company</h4>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">About Us</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">News</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Investor Relations</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Careers</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer text-700">Media Kit</a>
+                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-white">Công ty</h4>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Về chúng tôi</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Tin tức</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Tuyển dụng</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer text-gray-400 hover:text-white">Liên hệ</a>
                                 </div>
 
                                 <div className="col-12 md:col-3 mt-4 md:mt-0">
-                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-900">Resources</h4>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Get Started</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Learn</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer text-700">Case Studies</a>
+                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-white">Hỗ trợ</h4>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Hướng dẫn mua hàng</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Chính sách vận chuyển</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer text-gray-400 hover:text-white">Chính sách đổi trả</a>
                                 </div>
 
                                 <div className="col-12 md:col-3 mt-4 md:mt-0">
-                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-900">Community</h4>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Discord</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">
-                                        Events
-                                        <img src="/demo/images/landing/new-badge.svg" className="ml-2" alt="badge" />
-                                    </a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">FAQ</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer text-700">Blog</a>
+                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-white">Dịch vụ</h4>
+                                    <Link href="/customer/products" className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">
+                                        Sản phẩm
+                                    </Link>
+                                    <Link href="/auth/login" className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">
+                                        Đăng nhập
+                                    </Link>
+                                    <Link href="/auth/register" className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">
+                                        Đăng ký
+                                    </Link>
+                                    <a className="line-height-3 text-xl block cursor-pointer text-gray-400 hover:text-white">FAQ</a>
                                 </div>
 
                                 <div className="col-12 md:col-3 mt-4 md:mt-0">
-                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-900">Legal</h4>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Brand Policy</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-700">Privacy Policy</a>
-                                    <a className="line-height-3 text-xl block cursor-pointer text-700">Terms of Service</a>
+                                    <h4 className="font-medium text-2xl line-height-3 mb-3 text-white">Pháp lý</h4>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Điều khoản sử dụng</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer mb-2 text-gray-400 hover:text-white">Chính sách bảo mật</a>
+                                    <a className="line-height-3 text-xl block cursor-pointer text-gray-400 hover:text-white">Chứng nhận ATTP</a>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <Divider className="border-gray-700 mt-5" />
+                    <div className="text-center text-gray-400 mt-4">
+                        <p className="mb-2">© 2024 Cửa hàng thực phẩm. All rights reserved.</p>
+                        <p className="text-sm">Địa chỉ: 1 Mỹ đình, Nam Từ Liên, Hà Nội | Hotline: 0866 096 023 | Email: quang123@gmail.com.vn</p>
                     </div>
                 </div>
             </div>
