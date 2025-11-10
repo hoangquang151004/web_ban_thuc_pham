@@ -41,9 +41,13 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     const token = getAuthToken();
 
     const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...(options.headers as Record<string, string>)
     };
+
+    // Only set Content-Type if not already set and body is not FormData
+    if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -55,6 +59,7 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     };
 
     try {
+        console.log(`API Request: ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
         // Try to parse JSON response
@@ -66,10 +71,13 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
             throw new Error(`Server returned invalid JSON. Status: ${response.status}`);
         }
 
+        console.log(`API Response (${response.status}):`, data);
+
         // If response is not OK, but we have data structure from backend
         if (!response.ok) {
             // Return the full response structure from backend (with success: false)
             if (data && typeof data === 'object') {
+                console.error('API Error Response:', data);
                 return data;
             }
             throw new Error(data?.message || `Request failed with status ${response.status}`);
@@ -209,6 +217,173 @@ export const userManagementAPI = {
 
     toggleStatus: async (id: number) => {
         return await apiRequest(`/auth/users/${id}/toggle_status/`, {
+            method: 'POST'
+        });
+    }
+};
+
+// Category Management API
+export const categoryAPI = {
+    getAll: async (params?: { search?: string; status?: string; page?: number; page_size?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.search) queryParams.append('search', params.search);
+        if (params?.status) queryParams.append('status', params.status);
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/categories/${queryString ? '?' + queryString : ''}`);
+    },
+
+    getActive: async () => {
+        return await apiRequest('/categories/active/');
+    },
+
+    getById: async (id: number) => {
+        return await apiRequest(`/categories/${id}/`);
+    },
+
+    create: async (categoryData: { name: string; description?: string; status?: string }) => {
+        return await apiRequest('/categories/', {
+            method: 'POST',
+            body: JSON.stringify(categoryData)
+        });
+    },
+
+    update: async (id: number, categoryData: { name?: string; description?: string; status?: string }) => {
+        return await apiRequest(`/categories/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(categoryData)
+        });
+    },
+
+    delete: async (id: number) => {
+        return await apiRequest(`/categories/${id}/`, {
+            method: 'DELETE'
+        });
+    },
+
+    toggleStatus: async (id: number) => {
+        return await apiRequest(`/categories/${id}/toggle_status/`, {
+            method: 'POST'
+        });
+    }
+};
+
+// Product Management API
+export const productAPI = {
+    getAll: async (params?: { search?: string; category?: number; status?: string; min_price?: number; max_price?: number; min_rating?: number; low_stock?: boolean; is_featured?: boolean; page?: number; page_size?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.search) queryParams.append('search', params.search);
+        if (params?.category) queryParams.append('category', params.category.toString());
+        if (params?.status) queryParams.append('status', params.status);
+        if (params?.min_price) queryParams.append('min_price', params.min_price.toString());
+        if (params?.max_price) queryParams.append('max_price', params.max_price.toString());
+        if (params?.min_rating) queryParams.append('min_rating', params.min_rating.toString());
+        if (params?.low_stock) queryParams.append('low_stock', 'true');
+        if (params?.is_featured !== undefined) queryParams.append('is_featured', params.is_featured.toString());
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/products/${queryString ? '?' + queryString : ''}`);
+    },
+
+    getById: async (id: number) => {
+        return await apiRequest(`/products/${id}/`);
+    },
+
+    getBySlug: async (slug: string) => {
+        return await apiRequest(`/products/${slug}/`);
+    },
+
+    getByIdOrSlug: async (idOrSlug: string | number) => {
+        return await apiRequest(`/products/${idOrSlug}/`);
+    },
+
+    getFeatured: async () => {
+        return await apiRequest('/products/featured/');
+    },
+
+    getByCategory: async (categoryId: number, params?: { page?: number; page_size?: number }) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('category_id', categoryId.toString());
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+        return await apiRequest(`/products/by_category/?${queryParams.toString()}`);
+    },
+
+    getLowStock: async () => {
+        return await apiRequest('/products/low_stock/');
+    },
+
+    getOutOfStock: async () => {
+        return await apiRequest('/products/out_of_stock/');
+    },
+
+    create: async (productData: FormData | any) => {
+        const isFormData = productData instanceof FormData;
+
+        return await apiRequest('/products/', {
+            method: 'POST',
+            headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+            body: isFormData ? productData : JSON.stringify(productData)
+        });
+    },
+
+    update: async (id: number, productData: FormData | any) => {
+        const isFormData = productData instanceof FormData;
+
+        return await apiRequest(`/products/${id}/`, {
+            method: 'PATCH',
+            headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+            body: isFormData ? productData : JSON.stringify(productData)
+        });
+    },
+
+    delete: async (id: number) => {
+        return await apiRequest(`/products/${id}/`, {
+            method: 'DELETE'
+        });
+    },
+
+    uploadImage: async (id: number, imageFile: File) => {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        return await apiRequest(`/products/${id}/upload_image/`, {
+            method: 'POST',
+            body: formData
+        });
+    },
+
+    addImages: async (id: number, imageFiles: File[]) => {
+        const formData = new FormData();
+        imageFiles.forEach((file) => {
+            formData.append('images', file);
+        });
+
+        return await apiRequest(`/products/${id}/add_images/`, {
+            method: 'POST',
+            body: formData
+        });
+    },
+
+    deleteImage: async (id: number, imageId: number) => {
+        return await apiRequest(`/products/${id}/delete_image/${imageId}/`, {
+            method: 'DELETE'
+        });
+    },
+
+    toggleFeatured: async (id: number) => {
+        return await apiRequest(`/products/${id}/toggle_featured/`, {
+            method: 'POST'
+        });
+    },
+
+    toggleStatus: async (id: number) => {
+        return await apiRequest(`/products/${id}/toggle_status/`, {
             method: 'POST'
         });
     }

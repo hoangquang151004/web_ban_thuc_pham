@@ -387,7 +387,7 @@ const AccountsPage = () => {
                 <div className="flex gap-2">
                     <span className="p-input-icon-left">
                         <i className="pi pi-search" />
-                        <InputText type="search" placeholder="Tìm kiếm theo tên, email, SĐT..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} style={{ width: '300px' }} />
+                        <InputText type="search" placeholder="Tìm kiếm..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} />
                     </span>
                 </div>
             </div>
