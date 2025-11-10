@@ -8,62 +8,23 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Toast } from 'primereact/toast';
 import { Toolbar } from 'primereact/toolbar';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
+import { categoryAPI } from '@/services/api';
 
 interface Category {
     id: number;
     name: string;
     description: string;
     status: string;
-    productCount: number;
-    createdAt: string;
+    product_count: number;
+    created_at: string;
 }
 
 const CategoriesPage = () => {
-    const [categories, setCategories] = useState<Category[]>([
-        {
-            id: 1,
-            name: 'Rau Củ Quả',
-            description: 'Rau củ quả tươi sạch, organic',
-            status: 'active',
-            productCount: 45,
-            createdAt: '2024-01-15'
-        },
-        {
-            id: 2,
-            name: 'Thịt Tươi',
-            description: 'Thịt bò, heo, gà tươi sống',
-            status: 'active',
-            productCount: 32,
-            createdAt: '2024-01-16'
-        },
-        {
-            id: 3,
-            name: 'Hải Sản',
-            description: 'Hải sản tươi sống chất lượng cao',
-            status: 'active',
-            productCount: 28,
-            createdAt: '2024-01-17'
-        },
-        {
-            id: 4,
-            name: 'Trứng & Sữa',
-            description: 'Trứng gà, trứng vịt, sữa các loại',
-            status: 'active',
-            productCount: 18,
-            createdAt: '2024-01-18'
-        },
-        {
-            id: 5,
-            name: 'Gạo & Ngũ Cốc',
-            description: 'Gạo sạch, ngũ cốc dinh dưỡng',
-            status: 'active',
-            productCount: 25,
-            createdAt: '2024-01-19'
-        }
-    ]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const [categoryDialog, setCategoryDialog] = useState(false);
     const [deleteCategoryDialog, setDeleteCategoryDialog] = useState(false);
@@ -72,11 +33,39 @@ const CategoriesPage = () => {
         name: '',
         description: '',
         status: 'active',
-        productCount: 0,
-        createdAt: ''
+        product_count: 0,
+        created_at: ''
     });
     const [globalFilter, setGlobalFilter] = useState('');
     const toast = useRef<Toast>(null);
+
+    // Load categories from API
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            setLoading(true);
+            const response = await categoryAPI.getAll();
+            if (response.results) {
+                // Paginated response
+                setCategories(response.results);
+            } else if (Array.isArray(response)) {
+                // Non-paginated response
+                setCategories(response);
+            }
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message || 'Không thể tải danh sách danh mục',
+                life: 3000
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const statuses = [
         { label: 'Hoạt động', value: 'active' },
@@ -89,8 +78,8 @@ const CategoriesPage = () => {
             name: '',
             description: '',
             status: 'active',
-            productCount: 0,
-            createdAt: ''
+            product_count: 0,
+            created_at: ''
         });
         setCategoryDialog(true);
     };
@@ -103,42 +92,66 @@ const CategoriesPage = () => {
         setDeleteCategoryDialog(false);
     };
 
-    const saveCategory = () => {
+    const saveCategory = async () => {
         if (category.name.trim()) {
-            let _categories = [...categories];
+            try {
+                setLoading(true);
 
-            if (category.id) {
-                const index = _categories.findIndex((c) => c.id === category.id);
-                _categories[index] = category;
+                if (category.id) {
+                    // Update existing category
+                    const response = await categoryAPI.update(category.id, {
+                        name: category.name,
+                        description: category.description,
+                        status: category.status
+                    });
+
+                    if (response.data) {
+                        toast.current?.show({
+                            severity: 'success',
+                            summary: 'Thành công',
+                            detail: response.message || 'Cập nhật danh mục thành công',
+                            life: 3000
+                        });
+                    }
+                } else {
+                    // Create new category
+                    const response = await categoryAPI.create({
+                        name: category.name,
+                        description: category.description,
+                        status: category.status
+                    });
+
+                    if (response.data) {
+                        toast.current?.show({
+                            severity: 'success',
+                            summary: 'Thành công',
+                            detail: response.message || 'Thêm danh mục thành công',
+                            life: 3000
+                        });
+                    }
+                }
+
+                // Reload categories list
+                await loadCategories();
+                setCategoryDialog(false);
+                setCategory({
+                    id: 0,
+                    name: '',
+                    description: '',
+                    status: 'active',
+                    product_count: 0,
+                    created_at: ''
+                });
+            } catch (error: any) {
                 toast.current?.show({
-                    severity: 'success',
-                    summary: 'Thành công',
-                    detail: 'Cập nhật danh mục thành công',
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: error.message || 'Có lỗi xảy ra khi lưu danh mục',
                     life: 3000
                 });
-            } else {
-                category.id = Math.max(..._categories.map((c) => c.id), 0) + 1;
-                category.createdAt = new Date().toISOString().split('T')[0];
-                category.productCount = 0;
-                _categories.push(category);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Thành công',
-                    detail: 'Thêm danh mục thành công',
-                    life: 3000
-                });
+            } finally {
+                setLoading(false);
             }
-
-            setCategories(_categories);
-            setCategoryDialog(false);
-            setCategory({
-                id: 0,
-                name: '',
-                description: '',
-                status: 'active',
-                productCount: 0,
-                createdAt: ''
-            });
         }
     };
 
@@ -152,24 +165,39 @@ const CategoriesPage = () => {
         setDeleteCategoryDialog(true);
     };
 
-    const deleteCategory = () => {
-        let _categories = categories.filter((val) => val.id !== category.id);
-        setCategories(_categories);
-        setDeleteCategoryDialog(false);
-        setCategory({
-            id: 0,
-            name: '',
-            description: '',
-            status: 'active',
-            productCount: 0,
-            createdAt: ''
-        });
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Thành công',
-            detail: 'Xóa danh mục thành công',
-            life: 3000
-        });
+    const deleteCategory = async () => {
+        try {
+            setLoading(true);
+            const response = await categoryAPI.delete(category.id);
+
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Thành công',
+                detail: response.message || 'Xóa danh mục thành công',
+                life: 3000
+            });
+
+            // Reload categories list
+            await loadCategories();
+            setDeleteCategoryDialog(false);
+            setCategory({
+                id: 0,
+                name: '',
+                description: '',
+                status: 'active',
+                product_count: 0,
+                created_at: ''
+            });
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message || 'Không thể xóa danh mục',
+                life: 3000
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
@@ -248,13 +276,14 @@ const CategoriesPage = () => {
                         currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} danh mục"
                         globalFilter={globalFilter}
                         header={header}
+                        loading={loading}
                     >
                         <Column field="id" header="ID" sortable style={{ minWidth: '4rem' }}></Column>
                         <Column field="name" header="Tên danh mục" sortable style={{ minWidth: '12rem' }}></Column>
                         <Column field="description" header="Mô tả" sortable style={{ minWidth: '16rem' }}></Column>
-                        <Column field="productCount" header="Số sản phẩm" sortable style={{ minWidth: '8rem' }}></Column>
+                        <Column field="product_count" header="Số sản phẩm" sortable style={{ minWidth: '8rem' }}></Column>
                         <Column field="status" header="Trạng thái" body={statusBodyTemplate} sortable style={{ minWidth: '8rem' }}></Column>
-                        <Column field="createdAt" header="Ngày tạo" sortable style={{ minWidth: '10rem' }}></Column>
+                        <Column field="created_at" header="Ngày tạo" sortable style={{ minWidth: '10rem' }} body={(rowData) => new Date(rowData.created_at).toLocaleDateString('vi-VN')}></Column>
                         <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                     </DataTable>
 

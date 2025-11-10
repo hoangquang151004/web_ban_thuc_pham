@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, createContext } from 'react';
+import React, { useState, createContext, useEffect } from 'react';
 import { LayoutState, ChildContainerProps, LayoutConfig, LayoutContextProps } from '@/types';
 export const LayoutContext = createContext({} as LayoutContextProps);
 
@@ -22,8 +22,25 @@ export const LayoutProvider = ({ children }: ChildContainerProps) => {
         menuHoverActive: false
     });
 
-    // role can be 'admin' or 'customer'. In a real app this should come from auth/user info.
-    const [role, setRole] = useState<'admin' | 'customer'>('customer');
+    // role can be 'admin', 'seller' or 'customer'. Load from localStorage if available.
+    const [role, setRole] = useState<'admin' | 'seller' | 'customer'>('customer');
+
+    // Load role from localStorage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user.role === 'admin' || user.role === 'seller' || user.role === 'customer') {
+                        setRole(user.role);
+                    }
+                } catch (error) {
+                    console.error('Error parsing user from localStorage:', error);
+                }
+            }
+        }
+    }, []);
 
     const onMenuToggle = () => {
         if (isOverlay()) {
