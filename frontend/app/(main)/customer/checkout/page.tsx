@@ -6,59 +6,77 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { RadioButton } from 'primereact/radiobutton';
 import { Toast } from 'primereact/toast';
 import { Divider } from 'primereact/divider';
-import React, { useRef, useState } from 'react';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/layout/context/cartcontext';
+import Link from 'next/link';
 
-interface CartItem {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    image: string;
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const CheckoutPage = () => {
     const router = useRouter();
     const toast = useRef<Toast>(null);
-
-    const [cartItems] = useState<CartItem[]>([
-        {
-            id: 1,
-            name: 'Cải Thảo Hữu Cơ',
-            price: 25000,
-            quantity: 2,
-            image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300'
-        },
-        {
-            id: 2,
-            name: 'Trứng Gà Organic',
-            price: 65000,
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300'
-        },
-        {
-            id: 3,
-            name: 'Gạo ST25',
-            price: 120000,
-            quantity: 3,
-            image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300'
-        }
-    ]);
+    const { cart, clearCart, loading: cartLoading } = useCart();
 
     const [formData, setFormData] = useState({
-        fullName: 'Nguyễn Văn A',
-        phone: '0901234567',
-        email: 'nguyenvana@example.com',
-        address: '123 Nguyễn Văn Linh, Quận 7',
-        city: 'TP. Hồ Chí Minh',
-        district: 'Quận 7',
+        fullName: '',
+        phone: '',
+        email: '',
+        address: '',
+        city: '',
+        district: '',
         note: ''
     });
 
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
+    const [submitting, setSubmitting] = useState(false);
+    const [loadingUserInfo, setLoadingUserInfo] = useState(true);
+
+    const cartItems = cart?.items || [];
+
+    // Load user information from localStorage
+    useEffect(() => {
+        const loadUserInfo = () => {
+            try {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const user = JSON.parse(storedUser);
+                    setFormData((prev) => ({
+                        ...prev,
+                        fullName: user.full_name || '',
+                        phone: user.phone || '',
+                        email: user.email || '',
+                        address: user.address || ''
+                    }));
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            } finally {
+                setLoadingUserInfo(false);
+            }
+        };
+
+        loadUserInfo();
+    }, []);
+
+    // Kiểm tra giỏ hàng rỗng
+    useEffect(() => {
+        if (!cartLoading && cartItems.length === 0) {
+            toast.current?.show({
+                severity: 'warn',
+                summary: 'Giỏ hàng trống',
+                detail: 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán',
+                life: 3000
+            });
+            setTimeout(() => {
+                router.push('/customer/cart');
+            }, 1500);
+        }
+    }, [cartLoading, cartItems.length, router]);
 
     const calculateSubtotal = () => {
-        return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        return cart?.total_price || 0;
     };
 
     const calculateShipping = () => {
@@ -70,7 +88,8 @@ const CheckoutPage = () => {
         return calculateSubtotal() + calculateShipping();
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        // Validate form
         if (!formData.fullName || !formData.phone || !formData.address) {
             toast.current?.show({
                 severity: 'warn',
@@ -81,17 +100,165 @@ const CheckoutPage = () => {
             return;
         }
 
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Đặt hàng thành công',
-            detail: 'Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm!',
-            life: 3000
-        });
+        // Validate phone number
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            toast.current?.show({
+                severity: 'warn',
+                summary: 'Số điện thoại không hợp lệ',
+                detail: 'Vui lòng nhập số điện thoại hợp lệ (10-11 số)',
+                life: 3000
+            });
+            return;
+        }
 
-        setTimeout(() => {
-            router.push('/customer/orders');
-        }, 2000);
+        // Validate email nếu có
+        if (formData.email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.email)) {
+                toast.current?.show({
+                    severity: 'warn',
+                    summary: 'Email không hợp lệ',
+                    detail: 'Vui lòng nhập email hợp lệ',
+                    life: 3000
+                });
+                return;
+            }
+        }
+
+        setSubmitting(true);
+
+        try {
+            // Chuẩn bị dữ liệu đơn hàng
+            const orderData = {
+                full_name: formData.fullName,
+                phone: formData.phone,
+                email: formData.email,
+                address: formData.address,
+                district: formData.district,
+                city: formData.city,
+                note: formData.note,
+                payment_method: paymentMethod,
+                items: cartItems.map((item) => ({
+                    product_id: item.product.id,
+                    quantity: item.quantity
+                }))
+            };
+
+            // Gọi API tạo đơn hàng
+            const token = localStorage.getItem('access_token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+
+            // Thêm token nếu user đã đăng nhập
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/api/orders/`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(orderData)
+            });
+
+            // Kiểm tra content type trước khi parse JSON
+            const contentType = response.headers.get('content-type');
+            let data;
+
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Nếu không phải JSON, có thể là HTML error page
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error(`Lỗi kết nối API (Status: ${response.status}). Vui lòng kiểm tra backend đang chạy tại ${API_BASE_URL}`);
+            }
+
+            if (!response.ok) {
+                // Xử lý lỗi từ backend
+                let errorMessage = 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
+
+                if (typeof data === 'string') {
+                    errorMessage = data;
+                } else if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.items) {
+                    errorMessage = Array.isArray(data.items) ? data.items[0] : data.items;
+                } else if (data.non_field_errors) {
+                    errorMessage = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                } else if (data.detail) {
+                    errorMessage = data.detail;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            if (data && data.order) {
+                // Xóa giỏ hàng sau khi đặt hàng thành công
+                await clearCart();
+
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Đặt hàng thành công',
+                    detail: `Mã đơn hàng: ${data.order.order_number}. Cảm ơn bạn đã đặt hàng!`,
+                    life: 4000
+                });
+
+                // Chuyển hướng đến trang chi tiết đơn hàng hoặc trang đơn hàng
+                setTimeout(() => {
+                    router.push(`/customer/orders`);
+                }, 2000);
+            }
+        } catch (error: any) {
+            console.error('Error creating order:', error);
+
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Đặt hàng thất bại',
+                detail: error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.',
+                life: 5000
+            });
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    // Loading state
+    if (cartLoading || loadingUserInfo) {
+        return (
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="text-center py-8">
+                            <ProgressSpinner />
+                            <p className="mt-4">Đang tải thông tin...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Empty cart
+    if (cartItems.length === 0) {
+        return (
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="text-center py-8">
+                            <i className="pi pi-shopping-cart text-6xl text-400 mb-4"></i>
+                            <h3 className="text-600">Giỏ hàng của bạn đang trống</h3>
+                            <p className="text-500 mb-4">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
+                            <Link href="/customer/products">
+                                <Button label="Mua sắm ngay" icon="pi pi-shopping-bag" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="grid">
@@ -105,37 +272,58 @@ const CheckoutPage = () => {
 
             <div className="col-12 md:col-8">
                 <div className="card">
-                    <h6>Thông tin giao hàng</h6>
+                    <div className="flex justify-content-between align-items-center mb-3">
+                        <h6 className="m-0">Thông tin giao hàng</h6>
+                        {formData.fullName && (
+                            <small className="text-500">
+                                <i className="pi pi-info-circle mr-1"></i>
+                                Thông tin được lấy từ tài khoản của bạn
+                            </small>
+                        )}
+                    </div>
                     <div className="grid p-fluid">
                         <div className="col-12">
                             <label htmlFor="fullName">Họ và tên *</label>
-                            <InputText id="fullName" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
+                            <InputText id="fullName" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} placeholder="Nhập họ và tên người nhận" />
                         </div>
                         <div className="col-12 md:col-6">
                             <label htmlFor="phone">Số điện thoại *</label>
-                            <InputText id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                            <InputText id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Nhập số điện thoại" />
                         </div>
                         <div className="col-12 md:col-6">
                             <label htmlFor="email">Email</label>
-                            <InputText id="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                            <InputText id="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Nhập email (không bắt buộc)" />
                         </div>
                         <div className="col-12">
                             <label htmlFor="address">Địa chỉ *</label>
-                            <InputText id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                            <InputText id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Nhập địa chỉ chi tiết (số nhà, đường...)" />
                         </div>
                         <div className="col-12 md:col-6">
                             <label htmlFor="district">Quận/Huyện</label>
-                            <InputText id="district" value={formData.district} onChange={(e) => setFormData({ ...formData, district: e.target.value })} />
+                            <InputText id="district" value={formData.district} onChange={(e) => setFormData({ ...formData, district: e.target.value })} placeholder="Nhập quận/huyện" />
                         </div>
                         <div className="col-12 md:col-6">
                             <label htmlFor="city">Tỉnh/Thành phố</label>
-                            <InputText id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                            <InputText id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Nhập tỉnh/thành phố" />
                         </div>
                         <div className="col-12">
                             <label htmlFor="note">Ghi chú</label>
-                            <InputTextarea id="note" rows={3} value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} placeholder="Ghi chú về đơn hàng..." />
+                            <InputTextarea id="note" rows={3} value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} placeholder="Ghi chú về đơn hàng (giao giờ hành chính, gọi trước khi giao...)" />
                         </div>
                     </div>
+
+                    {!formData.fullName && (
+                        <div className="surface-100 p-3 border-round mt-3">
+                            <div className="flex align-items-start">
+                                <i className="pi pi-info-circle text-blue-500 mr-2 mt-1"></i>
+                                <div className="flex-1">
+                                    <p className="m-0 text-sm">
+                                        <strong>Mẹo:</strong> Đăng nhập để tự động điền thông tin giao hàng từ tài khoản của bạn.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <Divider />
 
@@ -176,16 +364,19 @@ const CheckoutPage = () => {
             <div className="col-12 md:col-4">
                 <div className="card">
                     <h6>Đơn hàng của bạn</h6>
-                    {cartItems.map((item) => (
-                        <div key={item.id} className="flex align-items-center mb-3 pb-3 border-bottom-1 surface-border">
-                            <img src={item.image} alt={item.name} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />
-                            <div className="flex-1">
-                                <div className="text-900 mb-1">{item.name}</div>
-                                <div className="text-600 text-sm">Số lượng: {item.quantity}</div>
+                    {cartItems.map((item) => {
+                        const imageUrl = item.product.main_image_url || item.product.main_image || '/demo/images/product/placeholder.png';
+                        return (
+                            <div key={item.id} className="flex align-items-center mb-3 pb-3 border-bottom-1 surface-border">
+                                <img src={imageUrl} alt={item.product.name} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />
+                                <div className="flex-1">
+                                    <div className="text-900 mb-1">{item.product.name}</div>
+                                    <div className="text-600 text-sm">Số lượng: {item.quantity}</div>
+                                </div>
+                                <div className="text-900 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.subtotal)}</div>
                             </div>
-                            <div className="text-900 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}</div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     <Divider />
 
@@ -205,7 +396,15 @@ const CheckoutPage = () => {
                         <span className="font-bold text-xl text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotal())}</span>
                     </div>
 
-                    <Button label="Đặt hàng" icon="pi pi-check" className="w-full" size="large" onClick={handleSubmit} />
+                    <Button
+                        label={submitting ? 'Đang xử lý...' : 'Đặt hàng'}
+                        icon={submitting ? 'pi pi-spin pi-spinner' : 'pi pi-check'}
+                        className="w-full"
+                        size="large"
+                        onClick={handleSubmit}
+                        disabled={submitting || cartItems.length === 0}
+                        loading={submitting}
+                    />
                 </div>
             </div>
         </div>

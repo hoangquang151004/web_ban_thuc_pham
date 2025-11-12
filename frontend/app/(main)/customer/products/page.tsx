@@ -13,6 +13,7 @@ import { Paginator } from 'primereact/paginator';
 import React, { useRef, useState, useEffect } from 'react';
 import { classNames } from 'primereact/utils';
 import { productAPI, categoryAPI } from '@/services/api';
+import { useCart } from '@/layout/context/cartcontext';
 
 interface Category {
     id: number;
@@ -53,11 +54,11 @@ const ProductsPage = () => {
     const [sortKey, setSortKey] = useState<string>('');
     const [filterVisible, setFilterVisible] = useState(false);
     const [categoryVisible, setCategoryVisible] = useState(true);
-    const [cart, setCart] = useState<{ [key: number]: number }>({});
     const [loading, setLoading] = useState(false);
     const [first, setFirst] = useState(0);
     const [rowsPerPage] = useState(12);
     const toast = useRef<Toast>(null);
+    const { addToCart: addToCartContext, cart: cartData, getCartCount } = useCart();
 
     const sortOptions = [
         { label: 'Mới nhất', value: 'newest' },
@@ -167,17 +168,23 @@ const ProductsPage = () => {
         setDisplayedProducts(filteredProducts.slice(startIndex, endIndex));
     };
 
-    const addToCart = (product: Product) => {
-        setCart((prev) => ({
-            ...prev,
-            [product.id]: (prev[product.id] || 0) + 1
-        }));
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Đã thêm vào giỏ',
-            detail: `${product.name} đã được thêm vào giỏ hàng`,
-            life: 3000
-        });
+    const addToCart = async (product: Product) => {
+        try {
+            await addToCartContext(product, 1);
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Đã thêm vào giỏ',
+                detail: `${product.name} đã được thêm vào giỏ hàng`,
+                life: 3000
+            });
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message || 'Không thể thêm sản phẩm vào giỏ hàng',
+                life: 3000
+            });
+        }
     };
 
     const onPageChange = (event: any) => {
@@ -232,12 +239,6 @@ const ProductsPage = () => {
                             <Button label="Chi tiết" icon="pi pi-eye" className="flex-1 p-button-outlined" onClick={() => (window.location.href = `/customer/products/${product.slug}`)} />
                             <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={!product.in_stock} onClick={() => addToCart(product)} tooltip="Thêm vào giỏ" tooltipOptions={{ position: 'top' }} />
                         </div>
-
-                        {cart[product.id] && (
-                            <div className="mt-2 text-center">
-                                <Tag value={`Trong giỏ: ${cart[product.id]}`} severity="success" className="w-full"></Tag>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
@@ -279,7 +280,7 @@ const ProductsPage = () => {
         );
     };
 
-    const totalCartItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+    const totalCartItems = getCartCount();
 
     return (
         <div className="grid">

@@ -1,5 +1,6 @@
 'use client';
 import { LayoutProvider } from '../layout/context/layoutcontext';
+import { CartProvider } from '../layout/context/cartcontext';
 import { PrimeReactProvider } from 'primereact/api';
 import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
@@ -19,7 +20,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
             </head>
             <body>
                 <PrimeReactProvider>
-                    <LayoutProvider>{children}</LayoutProvider>
+                    <LayoutProvider>
+                        <CartProvider>{children}</CartProvider>
+                    </LayoutProvider>
                 </PrimeReactProvider>
             </body>
         </html>

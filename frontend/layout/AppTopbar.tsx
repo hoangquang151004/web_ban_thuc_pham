@@ -13,9 +13,11 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Avatar } from 'primereact/avatar';
 import { authAPI, getStoredUser, removeAuthTokens } from '../services/api';
+import { useCart } from './context/cartcontext';
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar, role, setRole } = useContext(LayoutContext);
+    const { getCartCount } = useCart();
     const router = useRouter();
     const menubuttonRef = useRef(null);
     const topbarmenuRef = useRef(null);
@@ -138,7 +140,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                         </Link>
                         <Link href="/customer/cart" className="p-link layout-topbar-button p-overlay-badge">
                             <i className="pi pi-shopping-cart"></i>
-                            <Badge value="3" severity="danger"></Badge>
+                            {getCartCount() > 0 && <Badge value={getCartCount()} severity="danger"></Badge>}
                             <span className="hidden md:inline-block ml-2">Giỏ Hàng</span>
                         </Link>
                         <Link href="/customer/orders" className="p-link layout-topbar-button">
