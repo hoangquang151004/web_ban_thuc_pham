@@ -62,11 +62,22 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
         console.log(`API Request: ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
+        // Handle 204 No Content (common for DELETE operations)
+        if (response.status === 204) {
+            console.log(`API Response (204): No Content`);
+            return { success: true, message: 'Operation completed successfully' };
+        }
+
         // Try to parse JSON response
         let data;
         try {
             data = await response.json();
         } catch (parseError) {
+            // If parsing fails and status is OK, return a success response
+            if (response.ok) {
+                console.log(`API Response (${response.status}): No JSON body`);
+                return { success: true };
+            }
             console.error('JSON Parse Error:', parseError);
             throw new Error(`Server returned invalid JSON. Status: ${response.status}`);
         }
@@ -428,6 +439,49 @@ export const orderAPI = {
 
     getStatistics: async () => {
         return await apiRequest('/orders/statistics/');
+    }
+};
+
+// Review Management API
+export const reviewAPI = {
+    getAll: async () => {
+        return await apiRequest('/reviews/');
+    },
+
+    getById: async (id: number) => {
+        return await apiRequest(`/reviews/${id}/`);
+    },
+
+    getMyReviews: async () => {
+        return await apiRequest('/reviews/my_reviews/');
+    },
+
+    getReviewableProducts: async () => {
+        return await apiRequest('/reviews/reviewable_products/');
+    },
+
+    getByProduct: async (productId: number) => {
+        return await apiRequest(`/reviews/by_product/?product_id=${productId}`);
+    },
+
+    create: async (reviewData: { product_id: number; order_id?: number; rating: number; comment: string; images?: string[] }) => {
+        return await apiRequest('/reviews/', {
+            method: 'POST',
+            body: JSON.stringify(reviewData)
+        });
+    },
+
+    update: async (id: number, reviewData: { rating?: number; comment?: string; images?: string[]; status?: string; is_approved?: boolean }) => {
+        return await apiRequest(`/reviews/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(reviewData)
+        });
+    },
+
+    delete: async (id: number) => {
+        return await apiRequest(`/reviews/${id}/`, {
+            method: 'DELETE'
+        });
     }
 };
 

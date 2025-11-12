@@ -8,88 +8,137 @@ import { Dialog } from 'primereact/dialog';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { reviewAPI } from '@/services/api';
+import { Tag } from 'primereact/tag';
 
 interface Review {
     id: number;
-    productId: number;
-    productName: string;
-    productImage: string;
-    orderId: string;
+    product: number;
+    product_name: string;
+    product_image: string;
+    order: number;
+    order_number: string;
     rating: number;
     comment: string;
-    date: string;
+    images: string[];
+    is_verified_purchase: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+interface ReviewableProduct {
+    product_id: number;
+    product_name: string;
+    product_image: string;
+    order_id: number;
+    order_number: string;
 }
 
 const ReviewsPage = () => {
-    const [reviews, setReviews] = useState<Review[]>([
-        {
-            id: 1,
-            productId: 1,
-            productName: 'Cải Thảo Hữu Cơ',
-            productImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300',
-            orderId: 'DH001234',
-            rating: 5,
-            comment: 'Sản phẩm rất tươi và sạch, rất hài lòng!',
-            date: '2024-11-06'
-        },
-        {
-            id: 2,
-            productId: 4,
-            productName: 'Trứng Gà Organic',
-            productImage: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300',
-            orderId: 'DH001234',
-            rating: 4.5,
-            comment: 'Trứng tươi, lòng đỏ đẹp. Giá hơi cao nhưng chất lượng xứng đáng.',
-            date: '2024-11-06'
-        }
-    ]);
-
-    const [unreviewed] = useState([
-        {
-            productId: 2,
-            productName: 'Thịt Bò Úc',
-            productImage: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300',
-            orderId: 'DH001235'
-        },
-        {
-            productId: 5,
-            productName: 'Gạo ST25',
-            productImage: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300',
-            orderId: 'DH001235'
-        }
-    ]);
-
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [unreviewedProducts, setUnreviewedProducts] = useState<ReviewableProduct[]>([]);
     const [reviewDialog, setReviewDialog] = useState(false);
     const [editMode, setEditMode] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [currentReview, setCurrentReview] = useState<any>({
         id: 0,
-        productId: 0,
-        productName: '',
-        productImage: '',
-        orderId: '',
+        product_id: 0,
+        product_name: '',
+        product_image: '',
+        order_id: 0,
+        order_number: '',
         rating: 5,
-        comment: ''
+        comment: '',
+        images: []
     });
     const toast = useRef<Toast>(null);
 
-    const openNewReview = (product: any) => {
+    // Load data on mount
+    useEffect(() => {
+        const initializeData = async () => {
+            await Promise.all([loadReviews(), loadReviewableProducts()]);
+        };
+        initializeData();
+    }, []);
+
+    const loadReviews = async () => {
+        try {
+            setLoading(true);
+            const response = await reviewAPI.getMyReviews();
+            console.log('My reviews response:', response);
+
+            if (response && typeof response === 'object' && !Array.isArray(response)) {
+                // Nếu response là object với message lỗi
+                if (response.message || response.error) {
+                    throw new Error(response.message || response.error);
+                }
+            }
+
+            setReviews(Array.isArray(response) ? response : []);
+        } catch (error: any) {
+            console.error('Error loading reviews:', error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi tải đánh giá',
+                detail: error.message || 'Không thể tải danh sách đánh giá',
+                life: 3000
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadReviewableProducts = async () => {
+        try {
+            const response = await reviewAPI.getReviewableProducts();
+            console.log('Reviewable products response:', response);
+
+            if (response && typeof response === 'object' && !Array.isArray(response)) {
+                // Nếu response là object với message lỗi
+                if (response.message || response.error) {
+                    throw new Error(response.message || response.error);
+                }
+            }
+
+            setUnreviewedProducts(Array.isArray(response) ? response : []);
+        } catch (error: any) {
+            console.error('Error loading reviewable products:', error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi tải sản phẩm',
+                detail: error.message || 'Không thể tải danh sách sản phẩm chưa đánh giá',
+                life: 3000
+            });
+        }
+    };
+
+    const openNewReview = (product: ReviewableProduct) => {
         setEditMode(false);
         setCurrentReview({
             id: 0,
-            productId: product.productId,
-            productName: product.productName,
-            productImage: product.productImage,
-            orderId: product.orderId,
+            product_id: product.product_id,
+            product_name: product.product_name,
+            product_image: product.product_image,
+            order_id: product.order_id,
+            order_number: product.order_number,
             rating: 5,
-            comment: ''
+            comment: '',
+            images: []
         });
         setReviewDialog(true);
     };
 
     const openEditReview = (review: Review) => {
         setEditMode(true);
-        setCurrentReview({ ...review });
+        setCurrentReview({
+            ...review,
+            product_id: review.product,
+            product_name: review.product_name,
+            product_image: review.product_image,
+            order_id: review.order,
+            order_number: review.order_number
+        });
         setReviewDialog(true);
     };
 
@@ -97,16 +146,18 @@ const ReviewsPage = () => {
         setReviewDialog(false);
         setCurrentReview({
             id: 0,
-            productId: 0,
-            productName: '',
-            productImage: '',
-            orderId: '',
+            product_id: 0,
+            product_name: '',
+            product_image: '',
+            order_id: 0,
+            order_number: '',
             rating: 5,
-            comment: ''
+            comment: '',
+            images: []
         });
     };
 
-    const saveReview = () => {
+    const saveReview = async () => {
         if (!currentReview.comment.trim()) {
             toast.current?.show({
                 severity: 'warn',
@@ -117,34 +168,63 @@ const ReviewsPage = () => {
             return;
         }
 
-        if (editMode) {
-            setReviews((prev) => prev.map((r) => (r.id === currentReview.id ? { ...currentReview, date: new Date().toISOString().split('T')[0] } : r)));
+        try {
+            setLoading(true);
+
+            if (editMode) {
+                const response = await reviewAPI.update(currentReview.id, {
+                    rating: currentReview.rating,
+                    comment: currentReview.comment,
+                    images: currentReview.images
+                });
+
+                if (response.review) {
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Thành công',
+                        detail: response.message || 'Đánh giá đã được cập nhật',
+                        life: 3000
+                    });
+                    loadReviews();
+                }
+            } else {
+                const response = await reviewAPI.create({
+                    product_id: currentReview.product_id,
+                    order_id: currentReview.order_id,
+                    rating: currentReview.rating,
+                    comment: currentReview.comment,
+                    images: currentReview.images
+                });
+
+                if (response.review) {
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Thành công',
+                        detail: response.message || 'Đánh giá đã được gửi',
+                        life: 3000
+                    });
+                    loadReviews();
+                    loadReviewableProducts();
+                }
+            }
+
+            hideDialog();
+        } catch (error: any) {
+            console.error('Error saving review:', error);
             toast.current?.show({
-                severity: 'success',
-                summary: 'Thành công',
-                detail: 'Đánh giá đã được cập nhật',
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message || 'Không thể lưu đánh giá',
                 life: 3000
             });
-        } else {
-            const newReview = {
-                ...currentReview,
-                id: Math.max(...reviews.map((r) => r.id), 0) + 1,
-                date: new Date().toISOString().split('T')[0]
-            };
-            setReviews((prev) => [...prev, newReview]);
-            toast.current?.show({
-                severity: 'success',
-                summary: 'Thành công',
-                detail: 'Đánh giá đã được gửi',
-                life: 3000
-            });
+        } finally {
+            setLoading(false);
         }
-        hideDialog();
     };
 
     const confirmDelete = (review: Review) => {
         confirmDialog({
-            message: `Bạn có chắc chắn muốn xóa đánh giá của "${review.productName}"?`,
+            message: `Bạn có chắc chắn muốn xóa đánh giá của "${review.product_name}"?`,
             header: 'Xác nhận',
             icon: 'pi pi-exclamation-triangle',
             accept: () => deleteReview(review.id),
@@ -153,23 +233,45 @@ const ReviewsPage = () => {
         });
     };
 
-    const deleteReview = (id: number) => {
-        setReviews((prev) => prev.filter((r) => r.id !== id));
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Đã xóa',
-            detail: 'Đánh giá đã được xóa',
-            life: 3000
-        });
+    const deleteReview = async (id: number) => {
+        try {
+            setLoading(true);
+            await reviewAPI.delete(id);
+
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Đã xóa',
+                detail: 'Đánh giá đã được xóa',
+                life: 3000
+            });
+
+            loadReviews();
+            loadReviewableProducts();
+        } catch (error: any) {
+            console.error('Error deleting review:', error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message || 'Không thể xóa đánh giá',
+                life: 3000
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const productBodyTemplate = (rowData: Review | any) => {
+    const productBodyTemplate = (rowData: Review | ReviewableProduct) => {
+        const isReview = 'product_name' in rowData && 'order_number' in rowData;
+        const image = isReview ? (rowData as Review).product_image : (rowData as ReviewableProduct).product_image;
+        const name = isReview ? (rowData as Review).product_name : (rowData as ReviewableProduct).product_name;
+        const orderNum = isReview ? (rowData as Review).order_number : (rowData as ReviewableProduct).order_number;
+
         return (
             <div className="flex align-items-center">
-                <img src={rowData.productImage} alt={rowData.productName} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />
+                {image && <img src={image} alt={name} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />}
                 <div>
-                    <div className="font-bold">{rowData.productName}</div>
-                    <div className="text-sm text-600">Đơn hàng: {rowData.orderId}</div>
+                    <div className="font-bold">{name}</div>
+                    <div className="text-sm text-600">Đơn hàng: {orderNum}</div>
                 </div>
             </div>
         );
@@ -188,14 +290,38 @@ const ReviewsPage = () => {
         );
     };
 
-    const unreviewedActionTemplate = (rowData: any) => {
+    const unreviewedActionTemplate = (rowData: ReviewableProduct) => {
         return <Button label="Đánh giá ngay" icon="pi pi-star" onClick={() => openNewReview(rowData)} />;
+    };
+
+    const dateBodyTemplate = (rowData: Review) => {
+        return new Date(rowData.created_at).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
+    const verifiedBodyTemplate = (rowData: Review) => {
+        return rowData.is_verified_purchase ? <Tag value="Đã mua hàng" severity="success" icon="pi pi-check-circle" /> : null;
+    };
+
+    const commentBodyTemplate = (rowData: Review) => {
+        const comment = rowData.comment || '';
+        if (comment.length > 100) {
+            return (
+                <div className="text-overflow-ellipsis overflow-hidden white-space-nowrap" title={comment}>
+                    {comment.substring(0, 100)}...
+                </div>
+            );
+        }
+        return comment;
     };
 
     const dialogFooter = (
         <div>
-            <Button label="Hủy" icon="pi pi-times" outlined onClick={hideDialog} />
-            <Button label="Lưu" icon="pi pi-check" onClick={saveReview} />
+            <Button label="Hủy" icon="pi pi-times" outlined onClick={hideDialog} disabled={loading} />
+            <Button label="Lưu" icon="pi pi-check" onClick={saveReview} loading={loading} />
         </div>
     );
 
@@ -204,33 +330,63 @@ const ReviewsPage = () => {
             <Toast ref={toast} />
             <ConfirmDialog />
 
-            {unreviewed.length > 0 && (
-                <div className="col-12">
-                    <div className="card">
-                        <h5>Sản phẩm chưa đánh giá</h5>
-                        <DataTable value={unreviewed} responsiveLayout="scroll">
-                            <Column header="Sản phẩm" body={productBodyTemplate} />
-                            <Column body={unreviewedActionTemplate} style={{ width: '200px' }} />
-                        </DataTable>
-                    </div>
+            <div className="col-12">
+                <div className="card">
+                    <h5>
+                        <i className="pi pi-star-fill mr-2 text-yellow-500"></i>
+                        Sản phẩm chưa đánh giá
+                    </h5>
+
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <i className="pi pi-spin pi-spinner text-4xl text-primary"></i>
+                            <p className="text-600 mt-3">Đang tải sản phẩm...</p>
+                        </div>
+                    ) : unreviewedProducts.length === 0 ? (
+                        <div className="text-center py-5">
+                            <i className="pi pi-check-circle text-6xl text-green-400 mb-3"></i>
+                            <h6 className="text-600">Bạn đã đánh giá tất cả sản phẩm đã mua</h6>
+                            <p className="text-500 text-sm mt-2">Mua thêm sản phẩm để có thể đánh giá nhé!</p>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-600 mb-3">
+                                Bạn có <strong className="text-primary">{unreviewedProducts.length}</strong> sản phẩm chưa đánh giá
+                            </p>
+                            <DataTable value={unreviewedProducts} responsiveLayout="scroll" emptyMessage="Không có sản phẩm nào">
+                                <Column header="Sản phẩm" body={productBodyTemplate} />
+                                <Column body={unreviewedActionTemplate} style={{ width: '200px' }} />
+                            </DataTable>
+                        </>
+                    )}
                 </div>
-            )}
+            </div>
 
             <div className="col-12">
                 <div className="card">
-                    <h5>Đánh giá của tôi</h5>
+                    <h5>
+                        <i className="pi pi-list mr-2"></i>
+                        Đánh giá của tôi
+                    </h5>
 
-                    {reviews.length === 0 ? (
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <i className="pi pi-spin pi-spinner text-4xl text-primary"></i>
+                            <p className="text-600 mt-3">Đang tải đánh giá...</p>
+                        </div>
+                    ) : reviews.length === 0 ? (
                         <div className="text-center py-5">
                             <i className="pi pi-star text-6xl text-400 mb-3"></i>
                             <h6 className="text-600">Bạn chưa có đánh giá nào</h6>
+                            <p className="text-500 text-sm mt-2">Hãy mua hàng và đánh giá sản phẩm nhé!</p>
                         </div>
                     ) : (
-                        <DataTable value={reviews} responsiveLayout="scroll">
+                        <DataTable value={reviews} responsiveLayout="scroll" paginator rows={10} emptyMessage="Không có đánh giá nào">
                             <Column header="Sản phẩm" body={productBodyTemplate} style={{ minWidth: '300px' }} />
                             <Column header="Đánh giá" body={ratingBodyTemplate} style={{ minWidth: '150px' }} />
-                            <Column field="comment" header="Nhận xét" style={{ minWidth: '300px' }} />
-                            <Column field="date" header="Ngày đánh giá" style={{ minWidth: '120px' }} />
+                            <Column header="Trạng thái" body={verifiedBodyTemplate} style={{ minWidth: '120px' }} />
+                            <Column header="Nhận xét" body={commentBodyTemplate} style={{ minWidth: '300px', maxWidth: '300px' }} />
+                            <Column header="Ngày đánh giá" body={dateBodyTemplate} style={{ minWidth: '120px' }} />
                             <Column body={actionBodyTemplate} exportable={false} style={{ width: '150px' }} />
                         </DataTable>
                     )}
@@ -240,10 +396,10 @@ const ReviewsPage = () => {
             <Dialog visible={reviewDialog} style={{ width: '600px' }} header={editMode ? 'Sửa đánh giá' : 'Đánh giá sản phẩm'} modal className="p-fluid" footer={dialogFooter} onHide={hideDialog}>
                 <div className="field">
                     <div className="flex align-items-center mb-3 pb-3 border-bottom-1 surface-border">
-                        <img src={currentReview.productImage} alt={currentReview.productName} className="w-5rem h-5rem border-round mr-3" style={{ objectFit: 'cover' }} />
+                        {currentReview.product_image && <img src={currentReview.product_image} alt={currentReview.product_name} className="w-5rem h-5rem border-round mr-3" style={{ objectFit: 'cover' }} />}
                         <div>
-                            <div className="font-bold text-lg">{currentReview.productName}</div>
-                            <div className="text-600">Đơn hàng: {currentReview.orderId}</div>
+                            <div className="font-bold text-lg">{currentReview.product_name}</div>
+                            <div className="text-600">Đơn hàng: {currentReview.order_number}</div>
                         </div>
                     </div>
                 </div>
@@ -254,8 +410,15 @@ const ReviewsPage = () => {
                 </div>
 
                 <div className="field">
-                    <label htmlFor="comment">Nhận xét của bạn</label>
-                    <InputTextarea id="comment" value={currentReview.comment} onChange={(e) => setCurrentReview({ ...currentReview, comment: e.target.value })} rows={5} placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..." />
+                    <label htmlFor="comment">Nhận xét của bạn *</label>
+                    <InputTextarea
+                        id="comment"
+                        value={currentReview.comment}
+                        onChange={(e) => setCurrentReview({ ...currentReview, comment: e.target.value })}
+                        rows={5}
+                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                        disabled={loading}
+                    />
                 </div>
             </Dialog>
         </div>
