@@ -389,4 +389,46 @@ export const productAPI = {
     }
 };
 
+// Order Management API
+export const orderAPI = {
+    getAll: async (params?: { status?: string; payment_method?: string; page?: number; page_size?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.status) queryParams.append('status', params.status);
+        if (params?.payment_method) queryParams.append('payment_method', params.payment_method);
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/orders/${queryString ? '?' + queryString : ''}`);
+    },
+
+    getById: async (id: number) => {
+        return await apiRequest(`/orders/${id}/`);
+    },
+
+    create: async (orderData: { full_name: string; phone: string; email?: string; address: string; district?: string; city?: string; note?: string; payment_method: string; items: Array<{ product_id: number; quantity: number }> }) => {
+        return await apiRequest('/orders/', {
+            method: 'POST',
+            body: JSON.stringify(orderData)
+        });
+    },
+
+    updateStatus: async (id: number, status: string) => {
+        return await apiRequest(`/orders/${id}/update_status/`, {
+            method: 'POST',
+            body: JSON.stringify({ status })
+        });
+    },
+
+    cancel: async (id: number) => {
+        return await apiRequest(`/orders/${id}/cancel/`, {
+            method: 'POST'
+        });
+    },
+
+    getStatistics: async () => {
+        return await apiRequest('/orders/statistics/');
+    }
+};
+
 export default apiRequest;

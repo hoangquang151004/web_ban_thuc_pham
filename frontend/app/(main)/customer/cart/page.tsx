@@ -6,120 +6,97 @@ import { Column } from 'primereact/column';
 import { InputNumber } from 'primereact/inputnumber';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
+import { useCart, CartItem } from '@/layout/context/cartcontext';
+import { ProgressSpinner } from 'primereact/progressspinner';
 
-interface CartItem {
-    id: number;
-    productId: number;
-    name: string;
-    price: number;
-    quantity: number;
-    image: string;
-    stock: number;
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const CartPage = () => {
-    const [cartItems, setCartItems] = useState<CartItem[]>([
-        {
-            id: 1,
-            productId: 1,
-            name: 'Cải Thảo Hữu Cơ',
-            price: 25000,
-            quantity: 2,
-            image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300',
-            stock: 150
-        },
-        {
-            id: 2,
-            productId: 4,
-            name: 'Trứng Gà Organic',
-            price: 65000,
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300',
-            stock: 200
-        },
-        {
-            id: 3,
-            productId: 5,
-            name: 'Gạo ST25',
-            price: 120000,
-            quantity: 3,
-            image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300',
-            stock: 100
-        }
-    ]);
-
+    const { cart, loading, updateCartItem, removeFromCart, clearCart: clearCartContext } = useCart();
     const toast = useRef<Toast>(null);
 
-    const updateQuantity = (itemId: number, newQuantity: number) => {
+    const cartItems = cart?.items || [];
+
+    const updateQuantity = async (productId: number, newQuantity: number) => {
         if (newQuantity === 0) {
-            confirmRemove(itemId);
+            confirmRemove(productId);
             return;
         }
 
-        setCartItems((prev) =>
-            prev.map((item) => {
-                if (item.id === itemId) {
-                    if (newQuantity > item.stock) {
-                        toast.current?.show({
-                            severity: 'warn',
-                            summary: 'Cảnh báo',
-                            detail: `Chỉ còn ${item.stock} sản phẩm trong kho`,
-                            life: 3000
-                        });
-                        return item;
-                    }
-                    return { ...item, quantity: newQuantity };
-                }
-                return item;
-            })
-        );
-
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Đã cập nhật',
-            detail: 'Số lượng sản phẩm đã được cập nhật',
-            life: 2000
-        });
+        try {
+            await updateCartItem(productId, newQuantity);
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Đã cập nhật',
+                detail: 'Số lượng sản phẩm đã được cập nhật',
+                life: 2000
+            });
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.response?.data?.error || error.response?.data?.quantity || 'Không thể cập nhật số lượng',
+                life: 3000
+            });
+        }
     };
 
-    const confirmRemove = (itemId: number) => {
-        const item = cartItems.find((i) => i.id === itemId);
+    const confirmRemove = (productId: number) => {
+        const item = cartItems.find((i) => i.product.id === productId);
         confirmDialog({
-            message: `Bạn có chắc chắn muốn xóa "${item?.name}" khỏi giỏ hàng?`,
+            message: `Bạn có chắc chắn muốn xóa "${item?.product.name}" khỏi giỏ hàng?`,
             header: 'Xác nhận',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => removeItem(itemId),
+            accept: () => removeItem(productId),
             reject: () => {},
             acceptLabel: 'Có',
             rejectLabel: 'Không'
         });
     };
 
-    const removeItem = (itemId: number) => {
-        setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Đã xóa',
-            detail: 'Sản phẩm đã được xóa khỏi giỏ hàng',
-            life: 3000
-        });
+    const removeItem = async (productId: number) => {
+        try {
+            await removeFromCart(productId);
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Đã xóa',
+                detail: 'Sản phẩm đã được xóa khỏi giỏ hàng',
+                life: 3000
+            });
+        } catch (error) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: 'Không thể xóa sản phẩm',
+                life: 3000
+            });
+        }
     };
 
-    const clearCart = () => {
+    const handleClearCart = () => {
         confirmDialog({
             message: 'Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ hàng?',
             header: 'Xác nhận',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                setCartItems([]);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Đã xóa',
-                    detail: 'Giỏ hàng đã được làm trống',
-                    life: 3000
-                });
+            accept: async () => {
+                try {
+                    await clearCartContext();
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Đã xóa',
+                        detail: 'Giỏ hàng đã được làm trống',
+                        life: 3000
+                    });
+                } catch (error) {
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Lỗi',
+                        detail: 'Không thể xóa giỏ hàng',
+                        life: 3000
+                    });
+                }
             },
             reject: () => {},
             acceptLabel: 'Có',
@@ -128,7 +105,17 @@ const CartPage = () => {
     };
 
     const imageBodyTemplate = (rowData: CartItem) => {
-        return <img src={rowData.image} alt={rowData.name} className="shadow-2 border-round" style={{ width: '80px', height: '80px', objectFit: 'cover' }} />;
+        const imageUrl = rowData.product.main_image_url || rowData.product.main_image || '/demo/images/product/placeholder.png';
+        return <img src={imageUrl} alt={rowData.product.name} className="shadow-2 border-round" style={{ width: '80px', height: '80px', objectFit: 'cover' }} />;
+    };
+
+    const nameBodyTemplate = (rowData: CartItem) => {
+        return (
+            <div>
+                <div className="font-semibold">{rowData.product.name}</div>
+                <div className="text-sm text-500">{rowData.product.category_name}</div>
+            </div>
+        );
     };
 
     const priceBodyTemplate = (rowData: CartItem) => {
@@ -139,30 +126,30 @@ const CartPage = () => {
         return (
             <InputNumber
                 value={rowData.quantity}
-                onValueChange={(e) => updateQuantity(rowData.id, e.value || 0)}
+                onValueChange={(e) => updateQuantity(rowData.product.id, e.value || 0)}
                 showButtons
                 min={0}
-                max={rowData.stock}
+                max={rowData.product.stock}
                 buttonLayout="horizontal"
                 decrementButtonClassName="p-button-danger"
                 incrementButtonClassName="p-button-success"
                 incrementButtonIcon="pi pi-plus"
                 decrementButtonIcon="pi pi-minus"
+                disabled={loading}
             />
         );
     };
 
     const totalPriceBodyTemplate = (rowData: CartItem) => {
-        const total = rowData.price * rowData.quantity;
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rowData.subtotal);
     };
 
     const actionBodyTemplate = (rowData: CartItem) => {
-        return <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmRemove(rowData.id)} />;
+        return <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmRemove(rowData.product.id)} disabled={loading} />;
     };
 
     const calculateSubtotal = () => {
-        return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        return cart?.total_price || 0;
     };
 
     const calculateShipping = () => {
@@ -187,11 +174,15 @@ const CartPage = () => {
                             <Link href="/customer/products">
                                 <Button label="Tiếp tục mua sắm" icon="pi pi-arrow-left" outlined />
                             </Link>
-                            {cartItems.length > 0 && <Button label="Xóa tất cả" icon="pi pi-trash" severity="danger" outlined onClick={clearCart} />}
+                            {cartItems.length > 0 && <Button label="Xóa tất cả" icon="pi pi-trash" severity="danger" outlined onClick={handleClearCart} disabled={loading} />}
                         </div>
                     </div>
 
-                    {cartItems.length === 0 ? (
+                    {loading && cartItems.length === 0 ? (
+                        <div className="text-center py-8">
+                            <ProgressSpinner />
+                        </div>
+                    ) : cartItems.length === 0 ? (
                         <div className="text-center py-8">
                             <i className="pi pi-shopping-cart text-6xl text-400 mb-4"></i>
                             <h3 className="text-600">Giỏ hàng của bạn đang trống</h3>
@@ -204,7 +195,7 @@ const CartPage = () => {
                         <>
                             <DataTable value={cartItems} responsiveLayout="scroll">
                                 <Column header="Sản phẩm" body={imageBodyTemplate} style={{ width: '100px' }} />
-                                <Column field="name" header="Tên sản phẩm" style={{ minWidth: '200px' }} />
+                                <Column header="Tên sản phẩm" body={nameBodyTemplate} style={{ minWidth: '200px' }} />
                                 <Column header="Giá" body={priceBodyTemplate} style={{ minWidth: '150px' }} />
                                 <Column header="Số lượng" body={quantityBodyTemplate} style={{ minWidth: '180px' }} />
                                 <Column header="Tổng" body={totalPriceBodyTemplate} style={{ minWidth: '150px' }} />
@@ -212,13 +203,6 @@ const CartPage = () => {
                             </DataTable>
 
                             <div className="grid mt-4">
-                                <div className="col-12 md:col-8">
-                                    <div className="surface-100 p-4 border-round">
-                                        <h6 className="mt-0">Ghi chú đơn hàng</h6>
-                                        <textarea className="w-full p-3 border-round surface-overlay border-1 surface-border" rows={3} placeholder="Ghi chú về đơn hàng, ví dụ: thời gian giao hàng, địa chỉ cụ thể..." />
-                                    </div>
-                                </div>
-
                                 <div className="col-12 md:col-4">
                                     <div className="surface-100 p-4 border-round">
                                         <h6 className="mt-0">Tổng đơn hàng</h6>

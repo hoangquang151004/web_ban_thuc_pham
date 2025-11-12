@@ -183,7 +183,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
-    def upload_image(self, request, pk=None):
+    def upload_image(self, request, slug=None, pk=None):
         """Upload ảnh chính cho sản phẩm"""
         product = self.get_object()
         
@@ -203,7 +203,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         })
     
     @action(detail=True, methods=['post'])
-    def add_images(self, request, pk=None):
+    def add_images(self, request, slug=None, pk=None):
         """Thêm nhiều ảnh phụ cho sản phẩm"""
         product = self.get_object()
         
@@ -230,7 +230,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         })
     
     @action(detail=True, methods=['delete'], url_path='delete_image/(?P<image_id>[^/.]+)')
-    def delete_image(self, request, pk=None, image_id=None):
+    def delete_image(self, request, slug=None, pk=None, image_id=None):
         """Xóa một ảnh phụ của sản phẩm"""
         product = self.get_object()
         
@@ -248,7 +248,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=True, methods=['post'])
-    def toggle_featured(self, request, pk=None):
+    def toggle_featured(self, request, slug=None, pk=None):
         """Chuyển đổi trạng thái sản phẩm nổi bật (deprecated - không còn sử dụng)"""
         return Response(
             {'message': 'Tính năng sản phẩm nổi bật đã bị loại bỏ'},
@@ -256,7 +256,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
     
     @action(detail=True, methods=['post'])
-    def toggle_status(self, request, pk=None):
+    def toggle_status(self, request, slug=None, pk=None):
         """Chuyển đổi trạng thái sản phẩm"""
         product = self.get_object()
         
