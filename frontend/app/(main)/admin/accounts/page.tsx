@@ -436,7 +436,7 @@ const AccountsPage = () => {
             <div className="col-12">
                 <div className="card">
                     <Toast ref={toast} />
-                    <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar>
+                    {/* <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar> */}
 
                     <DataTable
                         value={filteredAccounts}

@@ -202,9 +202,9 @@ const CartPage = () => {
                                 <Column body={actionBodyTemplate} exportable={false} style={{ width: '100px' }} />
                             </DataTable>
 
-                            <div className="grid mt-4">
-                                <div className="col-12 md:col-4">
-                                    <div className="surface-100 p-4 border-round">
+                            <div className="grid mt-4 ">
+                                <div className="col-12 md:col-4 ">
+                                    <div className="surface-100 p-4 border-round  ">
                                         <h6 className="mt-0">Tổng đơn hàng</h6>
                                         <div className="flex justify-content-between mb-2">
                                             <span>Tạm tính:</span>

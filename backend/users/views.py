@@ -148,6 +148,52 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        # Check if user wants to change password
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        
+        if old_password and new_password:
+            # Verify old password
+            if not instance.check_password(old_password):
+                return Response({
+                    'success': False,
+                    'message': 'Mật khẩu hiện tại không đúng!'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate new password length
+            if len(new_password) < 6:
+                return Response({
+                    'success': False,
+                    'message': 'Mật khẩu mới phải có ít nhất 6 ký tự!'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Set new password
+            instance.set_password(new_password)
+            instance.save()
+            
+            # Update other profile fields if provided
+            profile_data = {k: v for k, v in request.data.items() 
+                          if k not in ['old_password', 'new_password']}
+            
+            if profile_data:
+                serializer = self.get_serializer(instance, data=profile_data, partial=True)
+                if serializer.is_valid():
+                    self.perform_update(serializer)
+                else:
+                    return Response({
+                        'success': False,
+                        'message': 'Cập nhật thất bại!',
+                        'errors': serializer.errors
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                'success': True,
+                'message': 'Cập nhật thông tin và mật khẩu thành công!',
+                'data': UserSerializer(instance).data
+            })
+        
+        # Normal profile update without password change
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         
         if serializer.is_valid():

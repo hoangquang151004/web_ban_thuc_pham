@@ -275,7 +275,7 @@ const OrdersPage = () => {
                         options={[{ label: 'Tất cả thanh toán', value: null }, ...paymentMethods]}
                         onChange={(e) => setSelectedPaymentMethod(e.value)}
                         placeholder="Chọn thanh toán"
-                        style={{ width: '220px' }}
+                        style={{ width: '200px' }}
                     />
                 </div>
 
