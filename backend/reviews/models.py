@@ -116,6 +116,13 @@ class Review(models.Model):
         # Update product rating
         self.update_product_rating()
     
+    def delete(self, *args, **kwargs):
+        """Override delete to update product rating after deletion"""
+        product = self.product
+        super().delete(*args, **kwargs)
+        # Update product rating after deletion
+        self.update_product_rating_static(product)
+    
     def update_product_rating(self):
         """Cập nhật rating trung bình của sản phẩm"""
         from django.db.models import Avg, Count
@@ -131,3 +138,20 @@ class Review(models.Model):
         self.product.rating = round(stats['avg_rating'] or 0, 1)
         self.product.reviews_count = stats['count'] or 0
         self.product.save(update_fields=['rating', 'reviews_count'])
+    
+    @staticmethod
+    def update_product_rating_static(product):
+        """Static method to update product rating (used after deletion)"""
+        from django.db.models import Avg, Count
+        
+        stats = Review.objects.filter(
+            product=product,
+            is_approved=True
+        ).aggregate(
+            avg_rating=Avg('rating'),
+            count=Count('id')
+        )
+        
+        product.rating = round(stats['avg_rating'] or 0, 1)
+        product.reviews_count = stats['count'] or 0
+        product.save(update_fields=['rating', 'reviews_count'])

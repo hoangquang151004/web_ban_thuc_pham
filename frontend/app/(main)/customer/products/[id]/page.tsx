@@ -12,7 +12,7 @@ import { Avatar } from 'primereact/avatar';
 import { Skeleton } from 'primereact/skeleton';
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { productAPI } from '@/services/api';
+import { productAPI, reviewAPI } from '@/services/api';
 import { useCart } from '@/layout/context/cartcontext';
 
 interface Product {
@@ -62,11 +62,37 @@ interface Product {
 
 interface Review {
     id: number;
-    userName: string;
+    user: number;
+    user_name: string;
+    user_email: string;
+    product: number;
+    product_name: string;
+    product_image: string | null;
+    order: number | null;
+    order_number: string | null;
     rating: number;
-    date: string;
     comment: string;
-    avatar?: string;
+    images: string[];
+    is_verified_purchase: boolean;
+    is_approved: boolean;
+    status: string;
+    helpful_count: number;
+    reply: string | null;
+    reply_date: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+interface ReviewStats {
+    total: number;
+    average: number;
+    breakdown: {
+        5: number;
+        4: number;
+        3: number;
+        2: number;
+        1: number;
+    };
 }
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
@@ -78,11 +104,26 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+    const [selectedRating, setSelectedRating] = useState<number | null>(null);
+    const [reviewStats, setReviewStats] = useState<ReviewStats>({
+        total: 0,
+        average: 0,
+        breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    });
 
     // Fetch product data
     useEffect(() => {
         loadProductData();
     }, [params.id]);
+
+    // Fetch reviews when product changes
+    useEffect(() => {
+        if (product) {
+            loadReviews();
+        }
+    }, [product?.id]);
 
     const loadProductData = async () => {
         setLoading(true);
@@ -134,33 +175,53 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         }
     };
 
-    // Mock reviews data (in future, fetch from API)
-    const reviews: Review[] = [
-        {
-            id: 1,
-            userName: 'Nguyễn Văn A',
-            rating: 5,
-            date: '2024-11-05',
-            comment: 'Sản phẩm rất tốt, gia đình tôi rất hài lòng. Sẽ ủng hộ shop thường xuyên!',
-            avatar: 'https://i.pravatar.cc/150?u=user1'
-        },
-        {
-            id: 2,
-            userName: 'Trần Thị B',
-            rating: 4,
-            date: '2024-11-03',
-            comment: 'Chất lượng tốt, đúng như mô tả. Giao hàng nhanh.',
-            avatar: 'https://i.pravatar.cc/150?u=user2'
-        },
-        {
-            id: 3,
-            userName: 'Lê Minh C',
-            rating: 5,
-            date: '2024-11-01',
-            comment: 'Sản phẩm tươi ngon, chất lượng. Giá cả hợp lý. Recommend!',
-            avatar: 'https://i.pravatar.cc/150?u=user3'
+    const loadReviews = async () => {
+        if (!product?.id) return;
+
+        setReviewsLoading(true);
+        try {
+            // Get reviews by product
+            const reviewsData = await reviewAPI.getByProduct(product.id);
+
+            if (reviewsData && Array.isArray(reviewsData)) {
+                setReviews(reviewsData);
+
+                // Calculate review statistics
+                if (reviewsData.length > 0) {
+                    const stats: ReviewStats = {
+                        total: reviewsData.length,
+                        average: 0,
+                        breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+                    };
+
+                    let totalRating = 0;
+                    reviewsData.forEach((review: Review) => {
+                        totalRating += review.rating;
+                        stats.breakdown[review.rating as keyof typeof stats.breakdown]++;
+                    });
+
+                    stats.average = totalRating / reviewsData.length;
+                    setReviewStats(stats);
+                } else {
+                    setReviewStats({
+                        total: 0,
+                        average: 0,
+                        breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Error loading reviews:', err);
+            setReviews([]);
+            setReviewStats({
+                total: 0,
+                average: 0,
+                breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+            });
+        } finally {
+            setReviewsLoading(false);
         }
-    ];
+    };
 
     // Prepare images for gallery
     const getProductImages = () => {
@@ -466,39 +527,126 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                             </div>
                         </TabPanel>
 
-                        <TabPanel header={`Đánh giá (${reviews.length})`}>
-                            <div className="mb-4">
-                                <div className="flex align-items-center gap-4 mb-4">
-                                    <div className="text-center">
-                                        <div className="text-sm text-600">{product.reviews_count} đánh giá</div>
+                        <TabPanel header={`Đánh giá (${reviewStats.total})`}>
+                            {/* Review Statistics */}
+                            <div className="grid mb-4">
+                                <div className="col-12 md:col-4">
+                                    <div className="surface-50 p-4 border-round text-center">
+                                        <div className="text-5xl font-bold text-primary mb-2">{reviewStats.average.toFixed(1)}</div>
+                                        <Rating value={Math.round(reviewStats.average)} readOnly cancel={false} className="mb-2" />
+                                        <div className="text-600">{reviewStats.total} đánh giá</div>
                                     </div>
-                                    <Divider layout="vertical" />
-                                    <div className="flex-1">
-                                        <Button label="Viết đánh giá của bạn" icon="pi pi-pencil" className="p-button-outlined" />
+                                </div>
+                                <div className="col-12 md:col-8">
+                                    <div className="flex flex-column gap-2">
+                                        {[5, 4, 3, 2, 1].map((star) => {
+                                            const count = reviewStats.breakdown[star as keyof typeof reviewStats.breakdown];
+                                            const percentage = reviewStats.total > 0 ? (count / reviewStats.total) * 100 : 0;
+                                            return (
+                                                <div key={star} className="flex align-items-center gap-3">
+                                                    <Button
+                                                        label={`${star} ⭐`}
+                                                        className={`p-button-sm ${selectedRating === star ? 'p-button-primary' : 'p-button-outlined'}`}
+                                                        onClick={() => setSelectedRating(selectedRating === star ? null : star)}
+                                                        style={{ minWidth: '80px' }}
+                                                    />
+                                                    <div className="flex-1 surface-300 border-round" style={{ height: '8px' }}>
+                                                        <div className="bg-primary border-round h-full" style={{ width: `${percentage}%` }}></div>
+                                                    </div>
+                                                    <span className="text-600" style={{ minWidth: '40px' }}>
+                                                        {count}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
 
                             <Divider />
 
-                            {reviews.map((review) => (
-                                <div key={review.id} className="mb-4">
-                                    <div className="flex gap-3">
-                                        <Avatar image={review.avatar} size="large" shape="circle" />
-                                        <div className="flex-1">
-                                            <div className="flex align-items-center justify-content-between mb-2">
-                                                <div>
-                                                    <div className="font-semibold text-900 mb-1">{review.userName}</div>
-                                                    <Rating value={review.rating} readOnly cancel={false} className="text-sm" />
-                                                </div>
-                                                <span className="text-sm text-600">{new Date(review.date).toLocaleDateString('vi-VN')}</span>
-                                            </div>
-                                            <p className="text-600 line-height-3 m-0">{review.comment}</p>
-                                        </div>
-                                    </div>
-                                    <Divider />
+                            {/* Reviews List */}
+                            {reviewsLoading ? (
+                                <div className="text-center py-5">
+                                    <i className="pi pi-spin pi-spinner text-4xl text-primary"></i>
+                                    <div className="text-600 mt-3">Đang tải đánh giá...</div>
                                 </div>
-                            ))}
+                            ) : reviews.length === 0 ? (
+                                <div className="text-center py-5">
+                                    <i className="pi pi-star text-6xl text-300 mb-3"></i>
+                                    <div className="text-900 font-semibold mb-2">Chưa có đánh giá nào</div>
+                                    <div className="text-600">Hãy là người đầu tiên đánh giá sản phẩm này!</div>
+                                </div>
+                            ) : (
+                                <>
+                                    {selectedRating && (
+                                        <div className="mb-3">
+                                            <Button label={`Hiển thị tất cả đánh giá (${reviewStats.total})`} icon="pi pi-times" className="p-button-text p-button-sm" onClick={() => setSelectedRating(null)} />
+                                        </div>
+                                    )}
+
+                                    {reviews
+                                        .filter((review) => !selectedRating || review.rating === selectedRating)
+                                        .map((review) => (
+                                            <div key={review.id} className="mb-4">
+                                                <div className="flex gap-3">
+                                                    <Avatar label={review.user_name.charAt(0).toUpperCase()} size="large" shape="circle" style={{ backgroundColor: '#2196F3', color: '#ffffff' }} />
+                                                    <div className="flex-1">
+                                                        <div className="flex align-items-start justify-content-between mb-2">
+                                                            <div className="flex-1">
+                                                                <div className="flex align-items-center gap-2 mb-1">
+                                                                    <div className="font-semibold text-900">{review.user_name}</div>
+                                                                    {review.is_verified_purchase && <Tag value="Đã mua hàng" severity="success" className="text-xs" />}
+                                                                </div>
+                                                                <Rating value={review.rating} readOnly cancel={false} className="text-sm" />
+                                                            </div>
+                                                            <span className="text-sm text-600">{new Date(review.created_at).toLocaleDateString('vi-VN')}</span>
+                                                        </div>
+                                                        <p className="text-600 line-height-3 m-0 mb-3">{review.comment}</p>
+
+                                                        {/* Review Images */}
+                                                        {review.images && review.images.length > 0 && (
+                                                            <div className="flex gap-2 mb-3">
+                                                                {review.images.map((image, idx) => (
+                                                                    <img key={idx} src={image} alt={`Review ${idx + 1}`} className="border-round" style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer' }} />
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Admin Reply */}
+                                                        {review.reply && (
+                                                            <div className="surface-50 p-3 border-round mt-3">
+                                                                <div className="flex align-items-center gap-2 mb-2">
+                                                                    <i className="pi pi-reply text-primary"></i>
+                                                                    <span className="font-semibold text-900">Phản hồi từ người bán</span>
+                                                                    {review.reply_date && <span className="text-sm text-600">{new Date(review.reply_date).toLocaleDateString('vi-VN')}</span>}
+                                                                </div>
+                                                                <p className="text-600 line-height-3 m-0">{review.reply}</p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Helpful Count */}
+                                                        {review.helpful_count > 0 && (
+                                                            <div className="text-sm text-600 mt-2">
+                                                                <i className="pi pi-thumbs-up mr-2"></i>
+                                                                {review.helpful_count} người thấy hữu ích
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <Divider />
+                                            </div>
+                                        ))}
+
+                                    {selectedRating && reviews.filter((r) => r.rating === selectedRating).length === 0 && (
+                                        <div className="text-center py-5">
+                                            <i className="pi pi-star text-6xl text-300 mb-3"></i>
+                                            <div className="text-900 font-semibold mb-2">Không có đánh giá {selectedRating} sao</div>
+                                            <div className="text-600">Thử lọc theo số sao khác</div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </TabPanel>
                     </TabView>
                 </div>

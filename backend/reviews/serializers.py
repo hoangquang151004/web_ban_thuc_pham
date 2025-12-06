@@ -155,6 +155,7 @@ class ProductReviewableSerializer(serializers.Serializer):
     product_image = serializers.SerializerMethodField()
     order_id = serializers.IntegerField(source='order.id')
     order_number = serializers.CharField(source='order.order_number')
+    order_date = serializers.DateTimeField(source='order.created_at')
     
     def get_product_image(self, obj):
         """Get product main image URL"""

@@ -685,13 +685,13 @@ const ProductsPage = () => {
                                             <InputNumber id="price" value={product.price} onValueChange={(e) => onNumberChange(e.value, 'price')} mode="currency" currency="VND" locale="vi-VN" className={product.price <= 0 ? 'p-invalid' : ''} />
                                         </div>
 
-                                        <div className="field">
+                                        {/* <div className="field">
                                             <label htmlFor="old_price" className="font-semibold">
                                                 Giá cũ (VNĐ)
                                             </label>
                                             <InputNumber id="old_price" value={product.old_price} onValueChange={(e) => onNumberChange(e.value, 'old_price')} mode="currency" currency="VND" locale="vi-VN" />
                                             <small className="text-500">Để trống nếu không có giá khuyến mãi</small>
-                                        </div>
+                                        </div> */}
 
                                         <div className="field">
                                             <label htmlFor="stock" className="font-semibold">

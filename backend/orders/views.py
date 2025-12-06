@@ -3,12 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Q
+from django.conf import settings
+from django.shortcuts import redirect
 from .models import Order, OrderItem
 from .serializers import (
     OrderSerializer,
     OrderCreateSerializer,
     OrderUpdateStatusSerializer
 )
+from .vnpay import VNPay
+from .momo import MoMo
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -18,8 +22,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """Phân quyền"""
-        if self.action in ['create']:
-            # Cho phép tạo đơn hàng không cần đăng nhập (guest checkout)
+        if self.action in ['create', 'create_vnpay_payment', 'vnpay_return', 'create_momo_payment', 'momo_return', 'momo_ipn']:
+            # Cho phép tạo đơn hàng và thanh toán không cần đăng nhập (guest checkout)
             return [AllowAny()]
         return [IsAuthenticated()]
     
@@ -194,3 +198,378 @@ class OrderViewSet(viewsets.ModelViewSet):
             'status_statistics': list(status_stats),
             'payment_statistics': list(payment_stats)
         })
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def create_vnpay_payment(self, request, pk=None):
+        """
+        Tạo URL thanh toán VNPay cho đơn hàng
+        """
+        # Lấy order theo ID trực tiếp, không qua get_object() để bypass permission check
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response(
+                {'error': 'Không tìm thấy đơn hàng'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Kiểm tra đơn hàng đã thanh toán chưa
+        if order.payment_status == 'paid':
+            return Response(
+                {'error': 'Đơn hàng đã được thanh toán'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Kiểm tra phương thức thanh toán
+        if order.payment_method != 'vnpay':
+            return Response(
+                {'error': 'Đơn hàng không sử dụng phương thức thanh toán VNPay'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Khởi tạo VNPay
+            vnpay = VNPay(
+                vnp_tmn_code=settings.VNPAY_TMN_CODE,
+                vnp_hash_secret=settings.VNPAY_HASH_SECRET,
+                vnp_url=settings.VNPAY_URL,
+                vnp_return_url=settings.VNPAY_RETURN_URL
+            )
+            
+            # Lấy IP address
+            ip_address = self._get_client_ip(request)
+            
+            # Tạo URL thanh toán
+            payment_url = vnpay.create_payment_url(
+                order_id=order.order_number,
+                amount=float(order.total),
+                order_desc=f"Thanh toan don hang {order.order_number}",
+                order_type='other',
+                language='vn',
+                ip_address=ip_address
+            )
+            
+            return Response({
+                'payment_url': payment_url,
+                'order_number': order.order_number
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Lỗi tạo URL thanh toán: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def vnpay_return(self, request):
+        """
+        Xử lý callback từ VNPay sau khi thanh toán
+        """
+        try:
+            # DEBUG: Log query params
+            print("=== VNPAY CALLBACK DEBUG ===")
+            print("Query params received:")
+            for k, v in request.query_params.items():
+                if k != 'vnp_SecureHash':
+                    print(f"  {k} = {v}")
+                else:
+                    print(f"  {k} = {v[:20]}...")
+            
+            # Khởi tạo VNPay
+            vnpay = VNPay(
+                vnp_tmn_code=settings.VNPAY_TMN_CODE,
+                vnp_hash_secret=settings.VNPAY_HASH_SECRET,
+                vnp_url=settings.VNPAY_URL,
+                vnp_return_url=settings.VNPAY_RETURN_URL
+            )
+            
+            # Validate response
+            query_params = dict(request.query_params)
+            # Convert QueryDict values từ list sang string
+            query_params = {k: v[0] if isinstance(v, list) else v for k, v in query_params.items()}
+            
+            result = vnpay.validate_response(query_params)
+            
+            print(f"Validation result: {'✅ VALID' if result['is_valid'] else '❌ INVALID'}")
+            print(f"Response code: {result['response_code']}")
+            print("=" * 50)
+            
+            if not result['is_valid']:
+                return Response(
+                    {'error': 'Chữ ký không hợp lệ'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Tìm đơn hàng
+            try:
+                order = Order.objects.get(order_number=result['order_id'])
+            except Order.DoesNotExist:
+                return Response(
+                    {'error': 'Không tìm thấy đơn hàng'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Cập nhật trạng thái thanh toán
+            if result['is_success']:
+                order.payment_status = 'paid'
+                order.status = 'confirmed'
+                
+                # Lưu thông tin giao dịch
+                order.transaction_id = result['transaction_no']
+                order.bank_code = result['bank_code']
+                order.bank_transaction_no = result.get('bank_tran_no', '')
+                
+                order.save()
+                
+                return Response({
+                    'message': 'Thanh toán thành công',
+                    'order': OrderSerializer(order).data,
+                    'transaction': result
+                })
+            else:
+                order.payment_status = 'failed'
+                order.save()
+                
+                return Response({
+                    'message': result['message'],
+                    'error': 'Thanh toán thất bại',
+                    'order': OrderSerializer(order).data,
+                    'transaction': result
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response(
+                {'error': f'Lỗi xử lý callback: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def create_momo_payment(self, request, pk=None):
+        """
+        Tạo payment request tới MoMo cho đơn hàng
+        """
+        # Lấy order theo ID
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response(
+                {'error': 'Không tìm thấy đơn hàng'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Kiểm tra đơn hàng đã thanh toán chưa
+        if order.payment_status == 'paid':
+            return Response(
+                {'error': 'Đơn hàng đã được thanh toán'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Kiểm tra phương thức thanh toán
+        if order.payment_method != 'momo':
+            return Response(
+                {'error': 'Đơn hàng không sử dụng phương thức thanh toán MoMo'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Khởi tạo MoMo
+            momo = MoMo(
+                partner_code=settings.MOMO_PARTNER_CODE,
+                access_key=settings.MOMO_ACCESS_KEY,
+                secret_key=settings.MOMO_SECRET_KEY,
+                api_url=settings.MOMO_API_URL,
+                return_url=settings.MOMO_RETURN_URL,
+                notify_url=settings.MOMO_NOTIFY_URL
+            )
+            
+            # Tạo payment request
+            result = momo.create_payment_url(
+                order_id=order.order_number,
+                amount=float(order.total),
+                order_info=f"Thanh toan don hang {order.order_number}",
+                lang='vi'
+            )
+            
+            if result['success']:
+                return Response({
+                    'payment_url': result['payment_url'],
+                    'order_number': order.order_number,
+                    'deep_link': result.get('deep_link'),
+                    'qr_code_url': result.get('qr_code_url')
+                })
+            else:
+                return Response(
+                    {'error': result.get('error', 'Lỗi tạo payment request')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Lỗi tạo payment request: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def momo_return(self, request):
+        """
+        Xử lý callback từ MoMo sau khi thanh toán
+        """
+        try:
+            # DEBUG: Log query params
+            print("=== MOMO CALLBACK DEBUG ===")
+            print("Query params received:")
+            for k, v in request.query_params.items():
+                if k != 'signature':
+                    print(f"  {k} = {v}")
+                else:
+                    print(f"  {k} = {v[:20]}...")
+            
+            # Khởi tạo MoMo
+            momo = MoMo(
+                partner_code=settings.MOMO_PARTNER_CODE,
+                access_key=settings.MOMO_ACCESS_KEY,
+                secret_key=settings.MOMO_SECRET_KEY,
+                api_url=settings.MOMO_API_URL,
+                return_url=settings.MOMO_RETURN_URL,
+                notify_url=settings.MOMO_NOTIFY_URL
+            )
+            
+            # Validate response
+            query_params = dict(request.query_params)
+            # Convert QueryDict values từ list sang string
+            query_params = {k: v[0] if isinstance(v, list) else v for k, v in query_params.items()}
+            
+            result = momo.validate_response(query_params)
+            
+            print(f"Validation result: {'✅ VALID' if result['is_valid'] else '❌ INVALID'}")
+            print(f"Result code: {result['result_code']}")
+            print("=" * 50)
+            
+            if not result['is_valid']:
+                return Response(
+                    {'error': 'Chữ ký không hợp lệ'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Tìm đơn hàng
+            try:
+                order = Order.objects.get(order_number=result['order_id'])
+            except Order.DoesNotExist:
+                return Response(
+                    {'error': 'Không tìm thấy đơn hàng'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Cập nhật trạng thái thanh toán
+            if result['is_success']:
+                order.payment_status = 'paid'
+                order.status = 'confirmed'
+                
+                # Lưu thông tin giao dịch
+                order.transaction_id = result['trans_id']
+                order.bank_transaction_no = result['request_id']
+                
+                order.save()
+                
+                return Response({
+                    'message': 'Thanh toán thành công',
+                    'order': OrderSerializer(order).data,
+                    'transaction': result
+                })
+            else:
+                order.payment_status = 'failed'
+                order.save()
+                
+                return Response({
+                    'message': result['error_message'],
+                    'error': 'Thanh toán thất bại',
+                    'order': OrderSerializer(order).data,
+                    'transaction': result
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response(
+                {'error': f'Lỗi xử lý callback: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def momo_ipn(self, request):
+        """
+        Xử lý IPN (Instant Payment Notification) từ MoMo
+        Đây là webhook để MoMo thông báo kết quả thanh toán
+        """
+        try:
+            # DEBUG: Log IPN data
+            print("=== MOMO IPN DEBUG ===")
+            print(f"IPN data received: {request.data}")
+            
+            # Khởi tạo MoMo
+            momo = MoMo(
+                partner_code=settings.MOMO_PARTNER_CODE,
+                access_key=settings.MOMO_ACCESS_KEY,
+                secret_key=settings.MOMO_SECRET_KEY,
+                api_url=settings.MOMO_API_URL,
+                return_url=settings.MOMO_RETURN_URL,
+                notify_url=settings.MOMO_NOTIFY_URL
+            )
+            
+            # Validate IPN
+            result = momo.validate_response(request.data)
+            
+            print(f"IPN Validation: {'✅ VALID' if result['is_valid'] else '❌ INVALID'}")
+            print("=" * 50)
+            
+            if not result['is_valid']:
+                # Trả về response theo format của MoMo
+                return Response({
+                    'partnerCode': settings.MOMO_PARTNER_CODE,
+                    'requestId': request.data.get('requestId'),
+                    'orderId': request.data.get('orderId'),
+                    'resultCode': 97,  # Invalid signature
+                    'message': 'Invalid signature'
+                })
+            
+            # Tìm và cập nhật đơn hàng
+            try:
+                order = Order.objects.get(order_number=result['order_id'])
+                
+                if result['is_success'] and order.payment_status != 'paid':
+                    order.payment_status = 'paid'
+                    order.status = 'confirmed'
+                    order.transaction_id = result['trans_id']
+                    order.bank_transaction_no = result['request_id']
+                    order.save()
+                    
+                    print(f"✅ Order {order.order_number} updated successfully")
+                
+            except Order.DoesNotExist:
+                print(f"❌ Order {result['order_id']} not found")
+            
+            # Trả về response thành công cho MoMo
+            return Response({
+                'partnerCode': settings.MOMO_PARTNER_CODE,
+                'requestId': request.data.get('requestId'),
+                'orderId': request.data.get('orderId'),
+                'resultCode': 0,
+                'message': 'Success'
+            })
+            
+        except Exception as e:
+            print(f"Error processing MoMo IPN: {str(e)}")
+            return Response({
+                'partnerCode': settings.MOMO_PARTNER_CODE,
+                'requestId': request.data.get('requestId', ''),
+                'orderId': request.data.get('orderId', ''),
+                'resultCode': 99,
+                'message': str(e)
+            })
+    
+    def _get_client_ip(self, request):
+        """Lấy IP address của client"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip or '127.0.0.1'

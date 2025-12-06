@@ -167,14 +167,20 @@ const CartPage = () => {
             <ConfirmDialog />
 
             <div className="col-12">
-                <div className="card">
-                    <div className="flex justify-content-between align-items-center mb-4">
-                        <h5 className="m-0">Giỏ Hàng Của Bạn</h5>
-                        <div className="flex gap-2">
+                <div className="card shadow-3">
+                    <div className="flex flex-column md:flex-row justify-content-between align-items-center mb-5 gap-3">
+                        <div className="flex align-items-center gap-3">
+                            <i className="pi pi-shopping-cart text-4xl text-primary"></i>
+                            <div>
+                                <h3 className="m-0 mb-1">Giỏ Hàng Của Bạn</h3>
+                                <p className="m-0 text-600 text-sm">{cartItems.length} sản phẩm</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
                             <Link href="/customer/products">
-                                <Button label="Tiếp tục mua sắm" icon="pi pi-arrow-left" outlined />
+                                <Button label="Tiếp tục mua sắm" icon="pi pi-arrow-left" outlined className="white-space-nowrap" />
                             </Link>
-                            {cartItems.length > 0 && <Button label="Xóa tất cả" icon="pi pi-trash" severity="danger" outlined onClick={handleClearCart} disabled={loading} />}
+                            {cartItems.length > 0 && <Button label="Xóa tất cả" icon="pi pi-trash" severity="danger" outlined onClick={handleClearCart} disabled={loading} className="white-space-nowrap" />}
                         </div>
                     </div>
 
@@ -184,49 +190,98 @@ const CartPage = () => {
                         </div>
                     ) : cartItems.length === 0 ? (
                         <div className="text-center py-8">
-                            <i className="pi pi-shopping-cart text-6xl text-400 mb-4"></i>
-                            <h3 className="text-600">Giỏ hàng của bạn đang trống</h3>
-                            <p className="text-500 mb-4">Hãy thêm một số sản phẩm vào giỏ hàng của bạn!</p>
+                            <div className="inline-flex align-items-center justify-content-center bg-primary-50 border-circle mb-4" style={{ width: '120px', height: '120px' }}>
+                                <i className="pi pi-shopping-cart text-6xl text-primary"></i>
+                            </div>
+                            <h3 className="text-900 mb-2">Giỏ hàng của bạn đang trống</h3>
+                            <p className="text-600 mb-4 text-lg">Hãy thêm một số sản phẩm vào giỏ hàng của bạn!</p>
                             <Link href="/customer/products">
-                                <Button label="Mua sắm ngay" icon="pi pi-shopping-bag" />
+                                <Button label="Mua sắm ngay" icon="pi pi-shopping-bag" size="large" />
                             </Link>
                         </div>
                     ) : (
                         <>
-                            <DataTable value={cartItems} responsiveLayout="scroll">
-                                <Column header="Sản phẩm" body={imageBodyTemplate} style={{ width: '100px' }} />
-                                <Column header="Tên sản phẩm" body={nameBodyTemplate} style={{ minWidth: '200px' }} />
-                                <Column header="Giá" body={priceBodyTemplate} style={{ minWidth: '150px' }} />
-                                <Column header="Số lượng" body={quantityBodyTemplate} style={{ minWidth: '180px' }} />
-                                <Column header="Tổng" body={totalPriceBodyTemplate} style={{ minWidth: '150px' }} />
-                                <Column body={actionBodyTemplate} exportable={false} style={{ width: '100px' }} />
-                            </DataTable>
+                            <div className="mb-4">
+                                <DataTable value={cartItems} responsiveLayout="scroll" className="cart-table" stripedRows>
+                                    <Column header="Sản phẩm" body={imageBodyTemplate} style={{ width: '100px' }} />
+                                    <Column header="Tên sản phẩm" body={nameBodyTemplate} style={{ minWidth: '200px' }} />
+                                    <Column header="Giá" body={priceBodyTemplate} style={{ minWidth: '150px' }} />
+                                    <Column header="Số lượng" body={quantityBodyTemplate} style={{ minWidth: '180px' }} />
+                                    <Column header="Tổng" body={totalPriceBodyTemplate} style={{ minWidth: '150px' }} />
+                                    <Column body={actionBodyTemplate} exportable={false} style={{ width: '100px' }} />
+                                </DataTable>
+                            </div>
 
-                            <div className="grid mt-4 ">
-                                <div className="col-12 md:col-4 ">
-                                    <div className="surface-100 p-4 border-round  ">
-                                        <h6 className="mt-0">Tổng đơn hàng</h6>
-                                        <div className="flex justify-content-between mb-2">
-                                            <span>Tạm tính:</span>
-                                            <span className="font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateSubtotal())}</span>
-                                        </div>
-                                        <div className="flex justify-content-between mb-2">
-                                            <span>Phí vận chuyển:</span>
-                                            <span className={calculateShipping() === 0 ? 'text-green-500 font-bold' : ''}>
-                                                {calculateShipping() === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateShipping())}
-                                            </span>
-                                        </div>
-                                        <div className="border-top-1 surface-border pt-2 mb-3"></div>
-                                        <div className="flex justify-content-between mb-3">
-                                            <span className="font-bold text-xl">Tổng cộng:</span>
-                                            <span className="font-bold text-xl text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotal())}</span>
+                            <div className="grid mt-5">
+                                <div className="col-12 lg:col-8">
+                                    <div className="surface-50 p-4 border-round border-1 border-primary-200">
+                                        <div className="flex align-items-center gap-3 mb-2">
+                                            <i className="pi pi-info-circle text-primary text-xl"></i>
+                                            <div>
+                                                <p className="m-0 font-semibold text-900">Miễn phí vận chuyển</p>
+                                                <p className="m-0 text-600 text-sm mt-1">Cho đơn hàng từ 500.000₫</p>
+                                            </div>
                                         </div>
                                         {calculateSubtotal() < 500000 && (
-                                            <p className="text-xs text-500 mb-3">Mua thêm {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000 - calculateSubtotal())} để được miễn phí vận chuyển!</p>
+                                            <div className="mt-3">
+                                                <div className="bg-primary-100 border-round p-2">
+                                                    <div className="flex justify-content-between mb-2">
+                                                        <span className="text-sm text-primary">Tiến trình miễn phí ship</span>
+                                                        <span className="text-sm font-semibold text-primary">{Math.round((calculateSubtotal() / 500000) * 100)}%</span>
+                                                    </div>
+                                                    <div className="bg-primary-200 border-round overflow-hidden" style={{ height: '8px' }}>
+                                                        <div className="bg-primary h-full transition-all transition-duration-300" style={{ width: `${Math.min((calculateSubtotal() / 500000) * 100, 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="col-12 lg:col-4">
+                                    <div className="surface-0 p-4 border-round shadow-3 border-1 border-200" style={{ position: 'sticky', top: '100px' }}>
+                                        <h5 className="mt-0 mb-3 text-primary">
+                                            <i className="pi pi-calculator mr-2"></i>
+                                            Tổng đơn hàng
+                                        </h5>
+                                        <div className="flex justify-content-between mb-3 p-2 surface-50 border-round">
+                                            <span className="text-700">Tạm tính:</span>
+                                            <span className="font-semibold text-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateSubtotal())}</span>
+                                        </div>
+                                        <div className="flex justify-content-between mb-3 p-2 surface-50 border-round">
+                                            <span className="text-700">Phí vận chuyển:</span>
+                                            <span className={calculateShipping() === 0 ? 'text-green-600 font-bold' : 'text-900'}>
+                                                {calculateShipping() === 0 ? (
+                                                    <>
+                                                        <i className="pi pi-check-circle mr-1"></i>
+                                                        Miễn phí
+                                                    </>
+                                                ) : (
+                                                    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateShipping())
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="border-top-2 border-primary-200 pt-3 mb-3"></div>
+                                        <div className="flex justify-content-between mb-4 p-3 bg-primary-50 border-round">
+                                            <span className="font-bold text-xl text-900">Tổng cộng:</span>
+                                            <span className="font-bold text-2xl text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotal())}</span>
+                                        </div>
+                                        {calculateSubtotal() < 500000 && (
+                                            <div className="bg-orange-50 border-round p-3 mb-3 border-1 border-orange-200">
+                                                <p className="text-sm text-orange-900 m-0 line-height-3">
+                                                    <i className="pi pi-gift mr-2"></i>
+                                                    Mua thêm <strong>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000 - calculateSubtotal())}</strong> để được miễn phí vận chuyển!
+                                                </p>
+                                            </div>
                                         )}
                                         <Link href="/customer/checkout">
-                                            <Button label="Thanh toán" icon="pi pi-credit-card" className="w-full" size="large" />
+                                            <Button label="Tiến hành thanh toán" icon="pi pi-arrow-right" iconPos="right" className="w-full" size="large" severity="success" />
                                         </Link>
+                                        <div className="text-center mt-3">
+                                            <p className="text-xs text-500 m-0">
+                                                <i className="pi pi-shield mr-1"></i>
+                                                Thanh toán an toàn & bảo mật
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -234,6 +289,23 @@ const CartPage = () => {
                     )}
                 </div>
             </div>
+
+            <style jsx global>{`
+                .cart-table .p-datatable-tbody > tr {
+                    transition: all 0.2s ease;
+                }
+                .cart-table .p-datatable-tbody > tr:hover {
+                    background: var(--surface-50) !important;
+                    transform: translateY(-2px);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+                .cart-table img {
+                    transition: transform 0.2s ease;
+                }
+                .cart-table img:hover {
+                    transform: scale(1.1);
+                }
+            `}</style>
         </div>
     );
 };

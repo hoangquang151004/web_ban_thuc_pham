@@ -94,6 +94,19 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         },
+        'CONN_MAX_AGE': 600,  # Connection pooling
+    }
+}
+
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
     }
 }
 
@@ -180,7 +193,18 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',  # Cho phép truy cập mặc định
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 12,  # Tăng từ 10 lên 12 để khớp với frontend
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/minute',
+        'user': '1000/minute'
+    }
 }
 
 # JWT Settings
@@ -206,3 +230,27 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Static Files
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# VNPay Settings
+import os
+from pathlib import Path
+
+# Load .env file if exists
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    from dotenv import load_dotenv
+    load_dotenv(env_path)
+
+# VNPay Configuration
+VNPAY_TMN_CODE = os.environ.get('VNPAY_TMN_CODE', '')  # Mã website của bạn tại VNPay
+VNPAY_HASH_SECRET = os.environ.get('VNPAY_HASH_SECRET', '')  # Secret key
+VNPAY_URL = os.environ.get('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html')  # URL thanh toán
+VNPAY_RETURN_URL = os.environ.get('VNPAY_RETURN_URL', 'http://localhost:3000/customer/payment/vnpay-return')  # URL callback
+
+# MoMo Configuration
+MOMO_PARTNER_CODE = os.environ.get('MOMO_PARTNER_CODE', '')  # Partner Code từ MoMo
+MOMO_ACCESS_KEY = os.environ.get('MOMO_ACCESS_KEY', '')  # Access Key
+MOMO_SECRET_KEY = os.environ.get('MOMO_SECRET_KEY', '')  # Secret Key
+MOMO_API_URL = os.environ.get('MOMO_API_URL', 'https://test-payment.momo.vn/v2/gateway/api/create')  # API URL (test hoặc production)
+MOMO_RETURN_URL = os.environ.get('MOMO_RETURN_URL', 'http://localhost:3000/customer/payment/momo-return')  # URL callback
+MOMO_NOTIFY_URL = os.environ.get('MOMO_NOTIFY_URL', 'http://localhost:8000/api/orders/momo_ipn/')  # IPN webhook URL

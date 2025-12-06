@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
@@ -11,6 +10,7 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import React, { useRef, useState, useEffect } from 'react';
 import { reviewAPI } from '@/services/api';
 import { Tag } from 'primereact/tag';
+import Image from 'next/image';
 
 interface Review {
     id: number;
@@ -33,6 +33,7 @@ interface ReviewableProduct {
     product_image: string;
     order_id: number;
     order_number: string;
+    order_date: string;
 }
 
 const ReviewsPage = () => {
@@ -101,7 +102,13 @@ const ReviewsPage = () => {
                 }
             }
 
-            setUnreviewedProducts(Array.isArray(response) ? response : []);
+            // Sắp xếp theo ngày mới nhất
+            const products = Array.isArray(response) ? response : [];
+            const sortedProducts = products.sort((a, b) => {
+                return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
+            });
+
+            setUnreviewedProducts(sortedProducts);
         } catch (error: any) {
             console.error('Error loading reviewable products:', error);
             toast.current?.show({
@@ -261,18 +268,46 @@ const ReviewsPage = () => {
     };
 
     const productBodyTemplate = (rowData: Review | ReviewableProduct) => {
-        const isReview = 'product_name' in rowData && 'order_number' in rowData;
+        const isReview = 'created_at' in rowData; // Review có created_at, ReviewableProduct có order_date
         const image = isReview ? (rowData as Review).product_image : (rowData as ReviewableProduct).product_image;
         const name = isReview ? (rowData as Review).product_name : (rowData as ReviewableProduct).product_name;
         const orderNum = isReview ? (rowData as Review).order_number : (rowData as ReviewableProduct).order_number;
 
         return (
             <div className="flex align-items-center">
-                {image && <img src={image} alt={name} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />}
+                {image && (
+                    <div style={{ position: 'relative', width: '4rem', height: '4rem', marginRight: '0.75rem' }}>
+                        <Image src={image} alt={name} fill style={{ objectFit: 'cover', borderRadius: '6px' }} sizes="64px" />
+                    </div>
+                )}
                 <div>
                     <div className="font-bold">{name}</div>
                     <div className="text-sm text-600">Đơn hàng: {orderNum}</div>
                 </div>
+            </div>
+        );
+    };
+
+    const getDaysAgo = (dateString: string) => {
+        const orderDate = new Date(dateString);
+        const today = new Date();
+        const diffTime = Math.abs(today.getTime() - orderDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    const orderDateBodyTemplate = (rowData: ReviewableProduct) => {
+        const daysAgo = getDaysAgo(rowData.order_date);
+        const orderDate = new Date(rowData.order_date).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        return (
+            <div>
+                <div className="font-semibold">{daysAgo} ngày trước</div>
+                <div className="text-sm text-500">{orderDate}</div>
             </div>
         );
     };
@@ -350,11 +385,14 @@ const ReviewsPage = () => {
                         </div>
                     ) : (
                         <>
-                            <p className="text-600 mb-3">
-                                Bạn có <strong className="text-primary">{unreviewedProducts.length}</strong> sản phẩm chưa đánh giá
-                            </p>
-                            <DataTable value={unreviewedProducts} responsiveLayout="scroll" emptyMessage="Không có sản phẩm nào">
-                                <Column header="Sản phẩm" body={productBodyTemplate} />
+                            <div className="flex justify-content-between align-items-center mb-3">
+                                <p className="text-600 m-0">
+                                    Bạn có <strong className="text-primary">{unreviewedProducts.length}</strong> sản phẩm chưa đánh giá
+                                </p>
+                            </div>
+                            <DataTable value={unreviewedProducts} responsiveLayout="scroll" emptyMessage="Không có sản phẩm nào" stripedRows paginator rows={5} rowsPerPageOptions={[5, 10, 15]}>
+                                <Column header="Sản phẩm" body={productBodyTemplate} style={{ minWidth: '300px' }} />
+                                <Column header="Ngày đặt hàng" body={orderDateBodyTemplate} style={{ minWidth: '150px' }} />
                                 <Column body={unreviewedActionTemplate} style={{ width: '200px' }} />
                             </DataTable>
                         </>
@@ -396,7 +434,11 @@ const ReviewsPage = () => {
             <Dialog visible={reviewDialog} style={{ width: '600px' }} header={editMode ? 'Sửa đánh giá' : 'Đánh giá sản phẩm'} modal className="p-fluid" footer={dialogFooter} onHide={hideDialog}>
                 <div className="field">
                     <div className="flex align-items-center mb-3 pb-3 border-bottom-1 surface-border">
-                        {currentReview.product_image && <img src={currentReview.product_image} alt={currentReview.product_name} className="w-5rem h-5rem border-round mr-3" style={{ objectFit: 'cover' }} />}
+                        {currentReview.product_image && (
+                            <div style={{ position: 'relative', width: '5rem', height: '5rem', marginRight: '0.75rem' }}>
+                                <Image src={currentReview.product_image} alt={currentReview.product_name} fill style={{ objectFit: 'cover', borderRadius: '6px' }} sizes="80px" />
+                            </div>
+                        )}
                         <div>
                             <div className="font-bold text-lg">{currentReview.product_name}</div>
                             <div className="text-600">Đơn hàng: {currentReview.order_number}</div>

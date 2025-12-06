@@ -53,7 +53,7 @@ const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [sortKey, setSortKey] = useState<string>('');
     const [filterVisible, setFilterVisible] = useState(false);
-    const [categoryVisible, setCategoryVisible] = useState(true);
+    const [categoryVisible, setCategoryVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [first, setFirst] = useState(0);
     const [rowsPerPage] = useState(12);
