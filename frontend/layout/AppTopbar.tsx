@@ -127,9 +127,12 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                     <span className="hidden md:inline-block">{role === 'admin' ? 'ADMIN THỰC PHẨM' : role === 'seller' ? 'QUẢN LÝ BÁN HÀNG' : 'CỬA HÀNG THỰC PHẨM'}</span>
                 </Link>
 
-                <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
-                    <i className="pi pi-bars" />
-                </button>
+                {/* Menu button - chỉ hiển thị cho admin và seller */}
+                {(role === 'admin' || role === 'seller') && (
+                    <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
+                        <i className="pi pi-bars" />
+                    </button>
+                )}
 
                 {/* Menu chức năng khách hàng - hiển thị khi role là customer */}
                 {role === 'customer' && (

@@ -436,7 +436,7 @@ const AccountsPage = () => {
             <div className="col-12">
                 <div className="card">
                     <Toast ref={toast} />
-                    <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar>
+                    {/* <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar> */}
 
                     <DataTable
                         value={filteredAccounts}
@@ -460,7 +460,7 @@ const AccountsPage = () => {
                         <Column field="role" header="Vai trò" body={roleBodyTemplate} sortable style={{ minWidth: '10rem' }}></Column>
                         <Column field="is_active" header="Trạng thái" body={statusBodyTemplate} sortable style={{ minWidth: '8rem' }}></Column>
                         <Column field="created_at" header="Ngày tạo" body={createdAtBodyTemplate} sortable style={{ minWidth: '10rem' }}></Column>
-                        <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                        <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '10rem' }}></Column>
                     </DataTable>
 
                     <Dialog

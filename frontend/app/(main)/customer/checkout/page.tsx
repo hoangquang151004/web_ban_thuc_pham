@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -11,6 +10,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/layout/context/cartcontext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -32,6 +32,7 @@ const CheckoutPage = () => {
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
     const [submitting, setSubmitting] = useState(false);
     const [loadingUserInfo, setLoadingUserInfo] = useState(true);
+    const [orderSuccess, setOrderSuccess] = useState(false);
 
     const cartItems = cart?.items || [];
 
@@ -60,9 +61,9 @@ const CheckoutPage = () => {
         loadUserInfo();
     }, []);
 
-    // Kiểm tra giỏ hàng rỗng
+    // Kiểm tra giỏ hàng rỗng (chỉ khi không phải sau khi đặt hàng thành công)
     useEffect(() => {
-        if (!cartLoading && cartItems.length === 0) {
+        if (!cartLoading && cartItems.length === 0 && !orderSuccess) {
             toast.current?.show({
                 severity: 'warn',
                 summary: 'Giỏ hàng trống',
@@ -70,10 +71,10 @@ const CheckoutPage = () => {
                 life: 3000
             });
             setTimeout(() => {
-                router.push('/customer/cart');
+                router.push('/customer/products');
             }, 1500);
         }
-    }, [cartLoading, cartItems.length, router]);
+    }, [cartLoading, cartItems.length, orderSuccess, router]);
 
     const calculateSubtotal = () => {
         return cart?.total_price || 0;
@@ -195,20 +196,77 @@ const CheckoutPage = () => {
             }
 
             if (data && data.order) {
-                // Xóa giỏ hàng sau khi đặt hàng thành công
+                // Đánh dấu đặt hàng thành công để tránh redirect về trang products
+                setOrderSuccess(true);
+
+                // Kiểm tra nếu là thanh toán VNPay
+                if (paymentMethod === 'vnpay') {
+                    // Gọi API tạo URL thanh toán VNPay
+                    const vnpayResponse = await fetch(`${API_BASE_URL}/api/orders/${data.order.id}/create_vnpay_payment/`, {
+                        method: 'POST',
+                        headers
+                    });
+
+                    if (vnpayResponse.ok) {
+                        const vnpayData = await vnpayResponse.json();
+
+                        toast.current?.show({
+                            severity: 'info',
+                            summary: 'Chuyển đến trang thanh toán',
+                            detail: 'Đang chuyển hướng đến VNPay...',
+                            life: 2000
+                        });
+
+                        // Xóa giỏ hàng trước khi chuyển đến VNPay
+                        await clearCart();
+
+                        // Chuyển hướng đến trang thanh toán VNPay
+                        setTimeout(() => {
+                            window.location.href = vnpayData.payment_url;
+                        }, 1000);
+                        return;
+                    } else {
+                        throw new Error('Không thể tạo URL thanh toán VNPay');
+                    }
+                }
+
+                // Kiểm tra nếu là thanh toán MoMo
+                if (paymentMethod === 'momo') {
+                    // Gọi API tạo payment request tới MoMo
+                    const momoResponse = await fetch(`${API_BASE_URL}/api/orders/${data.order.id}/create_momo_payment/`, {
+                        method: 'POST',
+                        headers
+                    });
+
+                    if (momoResponse.ok) {
+                        const momoData = await momoResponse.json();
+
+                        toast.current?.show({
+                            severity: 'info',
+                            summary: 'Chuyển đến trang thanh toán',
+                            detail: 'Đang chuyển hướng đến MoMo...',
+                            life: 2000
+                        });
+
+                        // Xóa giỏ hàng trước khi chuyển đến MoMo
+                        await clearCart();
+
+                        // Chuyển hướng đến trang thanh toán MoMo
+                        setTimeout(() => {
+                            window.location.href = momoData.payment_url;
+                        }, 1000);
+                        return;
+                    } else {
+                        const momoError = await momoResponse.json();
+                        throw new Error(momoError.error || 'Không thể tạo payment request MoMo');
+                    }
+                }
+
+                // Chuyển hướng ngay lập tức đến trang đơn hàng
+                router.push('/customer/orders');
+
+                // Xóa giỏ hàng sau khi đã bắt đầu chuyển hướng
                 await clearCart();
-
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Đặt hàng thành công',
-                    detail: `Mã đơn hàng: ${data.order.order_number}. Cảm ơn bạn đã đặt hàng!`,
-                    life: 4000
-                });
-
-                // Chuyển hướng đến trang chi tiết đơn hàng hoặc trang đơn hàng
-                setTimeout(() => {
-                    router.push(`/customer/orders`);
-                }, 2000);
             }
         } catch (error: any) {
             console.error('Error creating order:', error);
@@ -368,7 +426,9 @@ const CheckoutPage = () => {
                         const imageUrl = item.product.main_image_url || item.product.main_image || '/demo/images/product/placeholder.png';
                         return (
                             <div key={item.id} className="flex align-items-center mb-3 pb-3 border-bottom-1 surface-border">
-                                <img src={imageUrl} alt={item.product.name} className="w-4rem h-4rem border-round mr-3" style={{ objectFit: 'cover' }} />
+                                <div style={{ position: 'relative', width: '4rem', height: '4rem', marginRight: '0.75rem' }}>
+                                    <Image src={imageUrl} alt={item.product.name} fill style={{ objectFit: 'cover', borderRadius: '6px' }} sizes="64px" />
+                                </div>
                                 <div className="flex-1">
                                     <div className="text-900 mb-1">{item.product.name}</div>
                                     <div className="text-600 text-sm">Số lượng: {item.quantity}</div>

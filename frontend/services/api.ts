@@ -62,11 +62,22 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
         console.log(`API Request: ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
+        // Handle 204 No Content (common for DELETE operations)
+        if (response.status === 204) {
+            console.log(`API Response (204): No Content`);
+            return { success: true, message: 'Operation completed successfully' };
+        }
+
         // Try to parse JSON response
         let data;
         try {
             data = await response.json();
         } catch (parseError) {
+            // If parsing fails and status is OK, return a success response
+            if (response.ok) {
+                console.log(`API Response (${response.status}): No JSON body`);
+                return { success: true };
+            }
             console.error('JSON Parse Error:', parseError);
             throw new Error(`Server returned invalid JSON. Status: ${response.status}`);
         }
@@ -428,6 +439,145 @@ export const orderAPI = {
 
     getStatistics: async () => {
         return await apiRequest('/orders/statistics/');
+    }
+};
+
+// Review Management API
+export const reviewAPI = {
+    getAll: async () => {
+        return await apiRequest('/reviews/');
+    },
+
+    getById: async (id: number) => {
+        return await apiRequest(`/reviews/${id}/`);
+    },
+
+    getMyReviews: async () => {
+        return await apiRequest('/reviews/my_reviews/');
+    },
+
+    getReviewableProducts: async () => {
+        return await apiRequest('/reviews/reviewable_products/');
+    },
+
+    getByProduct: async (productId: number) => {
+        return await apiRequest(`/reviews/by_product/?product_id=${productId}`);
+    },
+
+    create: async (reviewData: { product_id: number; order_id?: number; rating: number; comment: string; images?: string[] }) => {
+        return await apiRequest('/reviews/', {
+            method: 'POST',
+            body: JSON.stringify(reviewData)
+        });
+    },
+
+    update: async (id: number, reviewData: { rating?: number; comment?: string; images?: string[]; status?: string; is_approved?: boolean }) => {
+        return await apiRequest(`/reviews/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(reviewData)
+        });
+    },
+
+    delete: async (id: number) => {
+        return await apiRequest(`/reviews/${id}/`, {
+            method: 'DELETE'
+        });
+    }
+};
+
+// Reports API (Admin & Seller only)
+export const reportsAPI = {
+    // Dashboard overview statistics
+    getDashboard: async (params?: { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.start_date) queryParams.append('start_date', params.start_date);
+        if (params?.end_date) queryParams.append('end_date', params.end_date);
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/dashboard/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Revenue by month (last N months or date range)
+    getRevenueByMonth: async (params?: number | { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (typeof params === 'number') {
+            queryParams.append('months', params.toString());
+        } else if (params && typeof params === 'object') {
+            if (params.start_date) queryParams.append('start_date', params.start_date);
+            if (params.end_date) queryParams.append('end_date', params.end_date);
+        }
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/revenue_by_month/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Orders by week (last N weeks or date range)
+    getOrdersByWeek: async (params?: number | { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (typeof params === 'number') {
+            queryParams.append('weeks', params.toString());
+        } else if (params && typeof params === 'object') {
+            if (params.start_date) queryParams.append('start_date', params.start_date);
+            if (params.end_date) queryParams.append('end_date', params.end_date);
+        }
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/orders_by_week/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Revenue by category
+    getRevenueByCategory: async (params?: { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.start_date) queryParams.append('start_date', params.start_date);
+        if (params?.end_date) queryParams.append('end_date', params.end_date);
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/revenue_by_category/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Top selling products
+    getTopProducts: async (params?: { start_date?: string; end_date?: string; limit?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.start_date) queryParams.append('start_date', params.start_date);
+        if (params?.end_date) queryParams.append('end_date', params.end_date);
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/top_products/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Order status statistics
+    getOrderStatusStats: async (params?: { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.start_date) queryParams.append('start_date', params.start_date);
+        if (params?.end_date) queryParams.append('end_date', params.end_date);
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/order_status_stats/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Payment method statistics
+    getPaymentMethodStats: async (params?: { start_date?: string; end_date?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.start_date) queryParams.append('start_date', params.start_date);
+        if (params?.end_date) queryParams.append('end_date', params.end_date);
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/payment_method_stats/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Daily revenue (last N days)
+    getDailyRevenue: async (days?: number) => {
+        const queryParams = new URLSearchParams();
+        if (days) queryParams.append('days', days.toString());
+
+        const queryString = queryParams.toString();
+        return await apiRequest(`/reports/daily_revenue/${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Customer statistics
+    getCustomerStats: async () => {
+        return await apiRequest('/reports/customer_stats/');
     }
 };
 
