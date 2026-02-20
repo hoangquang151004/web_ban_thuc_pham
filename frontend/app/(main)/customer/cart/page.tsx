@@ -154,7 +154,7 @@ const CartPage = () => {
 
     const calculateShipping = () => {
         const subtotal = calculateSubtotal();
-        return subtotal >= 500000 ? 0 : 30000; // Free shipping for orders over 500k
+        return subtotal >= 200000 ? 0 : 30000; // Free shipping for orders over 500k
     };
 
     const calculateTotal = () => {
@@ -222,7 +222,7 @@ const CartPage = () => {
                                                 <p className="m-0 text-600 text-sm mt-1">Cho đơn hàng từ 500.000₫</p>
                                             </div>
                                         </div>
-                                        {calculateSubtotal() < 500000 && (
+                                        {calculateSubtotal() < 200000 && (
                                             <div className="mt-3">
                                                 <div className="bg-primary-100 border-round p-2">
                                                     <div className="flex justify-content-between mb-2">
@@ -265,7 +265,7 @@ const CartPage = () => {
                                             <span className="font-bold text-xl text-900">Tổng cộng:</span>
                                             <span className="font-bold text-2xl text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotal())}</span>
                                         </div>
-                                        {calculateSubtotal() < 500000 && (
+                                        {calculateSubtotal() < 200000 && (
                                             <div className="bg-orange-50 border-round p-3 mb-3 border-1 border-orange-200">
                                                 <p className="text-sm text-orange-900 m-0 line-height-3">
                                                     <i className="pi pi-gift mr-2"></i>

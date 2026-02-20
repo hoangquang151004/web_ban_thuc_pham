@@ -9,6 +9,7 @@ import AppFooter from './AppFooter';
 import AppSidebar from './AppSidebar';
 import AppTopbar from './AppTopbar';
 import AppConfig from './AppConfig';
+import dynamic from 'next/dynamic';
 import { LayoutContext } from './context/layoutcontext';
 import { PrimeReactContext } from 'primereact/api';
 import { ChildContainerProps, LayoutState, AppTopbarRef } from '@/types';
@@ -122,6 +123,8 @@ const Layout = ({ children }: ChildContainerProps) => {
         'p-ripple-disabled': !layoutConfig.ripple
     });
 
+    const Chatbot = dynamic(() => import('@/components/Chatbot'));
+
     return (
         <React.Fragment>
             <div className={containerClass}>
@@ -135,6 +138,8 @@ const Layout = ({ children }: ChildContainerProps) => {
                 </div>
                 <AppConfig />
                 <div className="layout-mask"></div>
+                {/* Floating Chatbot */}
+                {/* <Chatbot /> */}
             </div>
         </React.Fragment>
     );
