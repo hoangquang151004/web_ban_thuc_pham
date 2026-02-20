@@ -267,7 +267,8 @@ const LandingPage = () => {
                                 <h3 className="text-gray-900 mb-2 text-3xl">Khách hàng hài lòng</h3>
                                 <span className="text-gray-600 text-2xl">Lê Thu Mai - Khách hàng thân thiết</span>
                                 <p className="text-gray-900 sm:line-height-2 md:line-height-4 text-2xl mt-4" style={{ maxWidth: '800px' }}>
-                                    "Tôi rất hài lòng với chất lượng thực phẩm ở đây. Rau củ tươi ngon, thịt cá đảm bảo vệ sinh, giao hàng nhanh chóng. Giá cả hợp lý và có nhiều chương trình khuyến mãi. Tôi sẽ giới thiệu cho bạn bè và người thân!"
+                                    &quot;Tôi rất hài lòng với chất lượng thực phẩm ở đây. Rau củ tươi ngon, thịt cá đảm bảo vệ sinh, giao hàng nhanh chóng. Giá cả hợp lý và có nhiều chương trình khuyến mãi. Tôi sẽ giới thiệu cho bạn bè và người
+                                    thân!&quot;
                                 </p>
                                 <div className="flex gap-2 mt-4">
                                     <i className="pi pi-star-fill text-yellow-500 text-2xl"></i>
