@@ -90,35 +90,45 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 # Database configuration
-DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
-        'NAME': os.environ.get('DB_NAME', 'food_store_db'),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
-        'CONN_MAX_AGE': 600,
-    }
-}
-
-# Override with Railway/Production database environment variables
-db_url = os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL')
-if db_url:
-    db_from_env = dj_database_url.parse(db_url)
-    if db_from_env:
-        DATABASES['default'].update(db_from_env)
-        DATABASES['default']['CONN_MAX_AGE'] = 600
-        # Ensure we keep the options if not provided by URL
-        if 'OPTIONS' not in db_from_env:
-            DATABASES['default']['OPTIONS'] = {
+if os.environ.get('MYSQLHOST'):
+    # Production configuration (Railway)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('MYSQLDATABASE'),
+            'USER': os.environ.get('MYSQLUSER'),
+            'PASSWORD': os.environ.get('MYSQLPASSWORD'),
+            'HOST': os.environ.get('MYSQLHOST'),
+            'PORT': os.environ.get('MYSQLPORT'),
+            'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4',
-            }
+            },
+            'CONN_MAX_AGE': 600,
+        }
+    }
+else:
+    # Local development or fallback
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
+            'NAME': os.environ.get('DB_NAME', 'food_store_db'),
+            'USER': os.environ.get('DB_USER', 'root'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+            'CONN_MAX_AGE': 600,
+        }
+    }
+
+    # Support DATABASE_URL if provided separately
+    db_from_env = dj_database_url.config(conn_max_age=600)
+    if db_from_env:
+        DATABASES['default'].update(db_from_env)
 
 # Caching Configuration
 CACHES = {
