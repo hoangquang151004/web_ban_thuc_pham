@@ -10,6 +10,11 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'webbanthucpham-production.up.railway.app',
+                pathname: '/media/**'
+            },
+            {
+                protocol: 'https',
                 hostname: '**'
             }
         ],
