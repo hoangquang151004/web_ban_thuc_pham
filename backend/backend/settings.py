@@ -91,6 +91,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database configuration
 if os.environ.get('MYSQLHOST'):
+    print("DB NAME:", os.environ.get("MYSQLDATABASE"))
     # Production configuration (Railway)
     DATABASES = {
         'default': {
