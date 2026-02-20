@@ -64,8 +64,7 @@ const OrdersPage = () => {
         { label: 'Đang xử lý', value: 'processing' },
         { label: 'Đang giao hàng', value: 'shipping' },
         { label: 'Đã giao hàng', value: 'delivered' },
-        { label: 'Đã hủy', value: 'cancelled' },
-        { label: 'Đã trả hàng', value: 'returned' }
+        { label: 'Đã hủy', value: 'cancelled' }
     ];
 
     const paymentMethods = [
@@ -219,8 +218,7 @@ const OrdersPage = () => {
             processing: { label: 'Đang xử lý', severity: 'info' },
             shipping: { label: 'Đang giao hàng', severity: 'primary' },
             delivered: { label: 'Đã giao hàng', severity: 'success' },
-            cancelled: { label: 'Đã hủy', severity: 'danger' },
-            returned: { label: 'Đã trả hàng', severity: 'danger' }
+            cancelled: { label: 'Đã hủy', severity: 'danger' }
         };
         const status = statusMap[rowData.status] || { label: rowData.status_display, severity: 'secondary' };
         return <Tag value={status.label} severity={status.severity} />;

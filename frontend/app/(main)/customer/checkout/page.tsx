@@ -82,7 +82,7 @@ const CheckoutPage = () => {
 
     const calculateShipping = () => {
         const subtotal = calculateSubtotal();
-        return subtotal >= 500000 ? 0 : 30000;
+        return subtotal >= 200000 ? 0 : 30000;
     };
 
     const calculateTotal = () => {
