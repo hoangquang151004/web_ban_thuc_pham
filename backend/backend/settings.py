@@ -13,9 +13,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import dj_database_url
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,7 +28,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-cr&%g9**(+r-lcky@3(t6x@56@e)b#_=@-8+wyp40baajh#k*_'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -91,12 +94,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'food_store_db',
-        'USER': 'root',
-        'PASSWORD': '',  # Thay bằng mật khẩu MySQL của bạn
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.environ.get('DB_NAME', 'food_store_db'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -249,13 +252,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # VNPay Settings
 import os
 from pathlib import Path
-
-# Load .env file if exists
-env_path = BASE_DIR / '.env'
-if env_path.exists():
-    from dotenv import load_dotenv
-    load_dotenv(env_path)
-
 # VNPay Configuration
 VNPAY_TMN_CODE = os.environ.get('VNPAY_TMN_CODE', '')  # Mã website của bạn tại VNPay
 VNPAY_HASH_SECRET = os.environ.get('VNPAY_HASH_SECRET', '')  # Secret key
