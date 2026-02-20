@@ -90,24 +90,35 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 # Database configuration
-if os.environ.get('MYSQLHOST'):
-    print("DB NAME:", os.environ.get("MYSQLDATABASE"))
+db_url = os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL')
+
+if os.environ.get('MYSQLHOST') or db_url:
     # Production configuration (Railway)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('MYSQLDATABASE'),
-            'USER': os.environ.get('MYSQLUSER'),
-            'PASSWORD': os.environ.get('MYSQLPASSWORD'),
-            'HOST': os.environ.get('MYSQLHOST'),
-            'PORT': os.environ.get('MYSQLPORT'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            },
-            'CONN_MAX_AGE': 600,
+    if db_url:
+        DATABASES = {
+            'default': dj_database_url.parse(db_url)
         }
-    }
+        DATABASES['default']['CONN_MAX_AGE'] = 600
+        # Fix possible missing options or engine
+        DATABASES['default'].setdefault('ENGINE', 'django.db.backends.mysql')
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': os.environ.get('MYSQLDATABASE') or os.environ.get('MYSQL_DATABASE') or 'railway',
+                'USER': os.environ.get('MYSQLUSER'),
+                'PASSWORD': os.environ.get('MYSQLPASSWORD'),
+                'HOST': os.environ.get('MYSQLHOST'),
+                'PORT': os.environ.get('MYSQLPORT'),
+            }
+        }
+    
+    # Ensure standard options for MySQL
+    DATABASES['default'].setdefault('OPTIONS', {
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        'charset': 'utf8mb4',
+    })
+    DATABASES['default']['CONN_MAX_AGE'] = 600
 else:
     # Local development or fallback
     DATABASES = {
