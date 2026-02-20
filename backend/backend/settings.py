@@ -109,7 +109,12 @@ DATABASES = {
 }
 
 # Update database configuration from environment variable (on Railway)
-import dj_database_url
+# Update database configuration from environment variable (on Railway)
+# Railway provides MYSQL_URL automatically for MySQL services
+railway_db_url = os.environ.get('MYSQL_URL')
+if railway_db_url:
+    os.environ.setdefault('DATABASE_URL', railway_db_url)
+
 db_from_env = dj_database_url.config(conn_max_age=600)
 if db_from_env:
     DATABASES['default'].update(db_from_env)
