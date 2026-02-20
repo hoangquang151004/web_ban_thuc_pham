@@ -89,9 +89,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
@@ -104,20 +102,23 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
         },
-        'CONN_MAX_AGE': 600,  # Connection pooling
+        'CONN_MAX_AGE': 600,
     }
 }
 
-# Update database configuration from environment variable (on Railway)
-# Update database configuration from environment variable (on Railway)
-# Railway provides MYSQL_URL automatically for MySQL services
-railway_db_url = os.environ.get('MYSQL_URL')
-if railway_db_url:
-    os.environ.setdefault('DATABASE_URL', railway_db_url)
-
-db_from_env = dj_database_url.config(conn_max_age=600)
-if db_from_env:
-    DATABASES['default'].update(db_from_env)
+# Override with Railway/Production database environment variables
+db_url = os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL')
+if db_url:
+    db_from_env = dj_database_url.parse(db_url)
+    if db_from_env:
+        DATABASES['default'].update(db_from_env)
+        DATABASES['default']['CONN_MAX_AGE'] = 600
+        # Ensure we keep the options if not provided by URL
+        if 'OPTIONS' not in db_from_env:
+            DATABASES['default']['OPTIONS'] = {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            }
 
 # Caching Configuration
 CACHES = {
