@@ -17,7 +17,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { orderAPI } from '@/services/api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = `${BASE_URL}/api`;
 
 interface OrderItem {
     id: number;
