@@ -464,6 +464,15 @@ const LandingPage = () => {
                     </div>
                 </div>
             </div>
+            <script
+                src="https://widget.xenoai.vn/widget.js"
+                data-public-key="pk_live_wWbKjdvuJBk3AdTiNDY9Zz1vor6UrDAqq0L8pcRwWx4"
+                data-api-url="https://widget.xenoai.vn"
+                data-bot-name="quang"
+                data-color="#2563eb"
+                data-placeholder="Nhap cau hoi..."
+                data-position="bottom-right"
+            ></script>
         </div>
     );
 };
