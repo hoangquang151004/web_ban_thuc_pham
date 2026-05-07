@@ -387,6 +387,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order_id=order.order_number,
                 amount=float(order.total),
                 order_info=f"Thanh toan don hang {order.order_number}",
+                auto_capture=False,
                 lang='vi'
             )
             
